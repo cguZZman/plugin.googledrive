@@ -45,13 +45,33 @@ msgid "Refresh interval in minutes"
 msgstr "מרווח זמן לרענון בדקות"
 
 msgctxt "#32007"
-msgid "Special: Photos"
-msgstr "מיוחד: תמונות"
+msgid "Google Photos"
+msgstr "אלבומי Google"
 
 msgctxt "#32008"
-msgid "Special: Camera Roll"
-msgstr "מיוחד: סיבוב המצלמה"
+msgid "-unused-Special: Camera Roll"
+msgstr ""
 
 msgctxt "#32009"
-msgid "Special: Music"
-msgstr "מיוחד: מוסיקה"
+msgid "-unused-Special: Music"
+msgstr ""
+
+msgctxt "#32010"
+msgid "Recursive auto-refreshed slideshow"
+msgstr "רקורסיבית אוטומטי לרענן שקופיות"
+
+msgctxt "#32011"
+msgid "Common Settings"
+msgstr "הגדרות נפוצות"
+
+msgctxt "#32012"
+msgid "Open Cloud Drive Common Settings..."
+msgstr "פתח הגדרות נפוצות של כונן ענן ..."
+
+msgctxt "#32013"
+msgid "My Drive"
+msgstr "הכונן שלי"
+
+msgctxt "#32014"
+msgid "Starred"
+msgstr "כיכב"

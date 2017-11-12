@@ -24,7 +24,6 @@ from clouddrive.common.cache.simplecache import SimpleCache
 from clouddrive.common.ui.addon import CloudDriveAddon
 from clouddrive.common.utils import Utils
 from resources.lib.provider.googledrive import GoogleDrive
-from clouddrive.common.ui.logger import Logger
 from urllib2 import HTTPError
 
 
@@ -35,7 +34,24 @@ class GoogleDriveAddon(CloudDriveAddon):
     _cache = None
     _child_count_supported = False
     _change_token = None
-    
+    _extension_map = {
+        'html' : 'text/html',
+        'htm' : 'text/html',
+        'txt' : 'text/plain',
+        'rtf' : 'application/rtf',
+        'odf' : 'application/vnd.oasis.opendocument.text',
+        'pdf' : 'application/pdf',
+        'doc' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'docx' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'epub' : 'application/epub+zip',
+        'xls' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'sxc' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'csv' : 'text/csv',
+        'ppt' : 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'pptx' : 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'sxi' : 'application/vnd.oasis.opendocument.presentation',
+        'json' : 'application/vnd.google-apps.script+json'
+    }    
     def __init__(self):
         self._cache = SimpleCache()
         super(GoogleDriveAddon, self).__init__()
@@ -62,21 +78,17 @@ class GoogleDriveAddon(CloudDriveAddon):
             self._change_token = Utils.get_safe_value(response, 'startPageToken')
             change_token = 1
         else:
-            Logger.notice('checking change with %s and %s' % (self._change_token, change_token))
             page_token = self._change_token
             while page_token:
                 self._parameters['pageToken'] = page_token
                 self._parameters['fields'] = 'nextPageToken,newStartPageToken,changes(file(id,name,parents))'
-                Logger.notice('%s' % (self._parameters))
                 response = self._provider.get('/changes', parameters = self._parameters)
-                Logger.notice(response)
                 if self.cancel_operation():
                     return
                 self._change_token = Utils.get_safe_value(response, 'newStartPageToken', self._change_token)
                 changes = Utils.get_safe_value(response, 'changes', [])
                 for change in changes:
                     f = Utils.get_safe_value(change, 'file', {})
-                    Logger.notice(f)
                     parents = Utils.get_safe_value(f, 'parents', [])
                     parents.append(f['id'])
                     if item_id in parents:
@@ -142,7 +154,7 @@ class GoogleDriveAddon(CloudDriveAddon):
             'name': f['name'],
             'name_extension' : Utils.get_extension(f['name']),
             'drive_id' : Utils.get_safe_value(Utils.get_safe_value(f, 'owners', [{}])[0], 'permissionId'),
-            'mimetype' : Utils.get_safe_value(f, 'mimeType'),
+            'mimetype' : Utils.get_safe_value(f, 'mimeType', ''),
             'last_modified_date' : Utils.get_safe_value(f,'modifiedTime'),
             'size': size,
             'description': Utils.get_safe_value(f, 'description', '')
@@ -158,18 +170,6 @@ class GoogleDriveAddon(CloudDriveAddon):
                 'height' : Utils.get_safe_value(video, 'height'),
                 'duration' : long('%s' % Utils.get_safe_value(video, 'durationMillis', 0)) / 1000
             }
-        if 'audio' in f:
-            audio = f['audio']
-            item['audio'] = {
-                'tracknumber' : Utils.get_safe_value(audio, 'track'),
-                'discnumber' : Utils.get_safe_value(audio, 'disc'),
-                'duration' : int(Utils.get_safe_value(audio, 'duration') or '0') / 1000,
-                'year' : Utils.get_safe_value(audio, 'year'),
-                'genre' : Utils.get_safe_value(audio, 'genre'),
-                'album': Utils.get_safe_value(audio, 'album'),
-                'artist': Utils.get_safe_value(audio, 'artist'),
-                'title': Utils.get_safe_value(audio, 'title')
-            }
         if 'imageMediaMetadata' in f:
             item['image'] = {
                 'size' : size
@@ -177,17 +177,29 @@ class GoogleDriveAddon(CloudDriveAddon):
         if 'hasThumbnail' in f and f['hasThumbnail']:
             item['thumbnail'] = Utils.get_safe_value(f, 'thumbnailLink')
         if include_download_info:
+            parameters = {
+                'alt': 'media',
+                'access_token': self._provider.get_access_tokens()['access_token']
+            }
+            url = self._provider._get_api_url() + '/files/%s' % item['id']
+            if 'size' not in f and item['mimetype'] == 'application/vnd.google-apps.document':
+                url += '/export'
+                parameters['mimeType'] = self.get_mimetype_by_extension(item['name_extension'])
             item['download_info'] =  {
-                'url' : self._provider._get_api_url() + '/files/%s?alt=media&access_token=%s' % (f['id'], self._provider.get_access_tokens()['access_token'])
+                'url' : url + '?%s' % urllib.urlencode(parameters)
             }
         return item
+    
+    def get_mimetype_by_extension(self, extension):
+        if extension and extension in self._extension_map:
+            return self._extension_map[extension]
+        return self._extension_map['pdf']
     
     def get_item_by_path(self, path, include_download_info=False):
         if path[:1] == '/':
             path = path[1:]
         if path[-1:] == '/':
             path = path[:-1]
-        Logger.notice('get_item_by_path: %s' % path)
         parts = path.split('/')
         parent = 'root'
         current_path = ''
