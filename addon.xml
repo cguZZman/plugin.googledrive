@@ -13,7 +13,7 @@
 		<summary lang="en_GB">Google Drive for KODI</summary>
 		<description lang="en_GB">
 Play all your media from Google Drive including Videos, Music and Pictures.
- - Unlimited number of personal or business accounts.
+ - Unlimited number of accounts.
  - Search over your drive.
  - Auto-Refreshed slideshow.
  - Export your videos to your library (.strm files)
@@ -23,12 +23,12 @@ Play all your media from Google Drive including Videos, Music and Pictures.
 		<summary lang="he_IL">כונן Google Drive של מיקרוסופט עבור קודי</summary>
 		<description lang="he_IL">
 הפעל את כל המדיה שלך מ- Google Drive כולל וידאו, מוסיקה ותמונות.
-  - מספר בלתי מוגבל של חשבונות אישיים או עסקיים.
+  - מספר בלתי מוגבל של חשבונות.
   - חיפוש ומציאת הכונן שלך.
   - ריענון מצגת אוטומטית.
   - ייצוא קטעי הווידאו לספרייה שלך (קבצי .strm)
   - שימוש ב-Google Drive כמקור
-  - תוכנית זו אינה מזוהה עם או בחסות מיקרוסופט.
+  - תוכנית זו אינה קשורה או ממומנת על ידי Google.
 		</description>		
 		<license>GNU GENERAL PUBLIC LICENSE. Version 3, 29 June 2007</license>
 		<source>https://github.com/cguZZman/plugin.googledrive</source>
