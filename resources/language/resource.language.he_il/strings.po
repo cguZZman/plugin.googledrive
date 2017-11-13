@@ -50,11 +50,11 @@ msgstr "אלבומי Google"
 
 msgctxt "#32008"
 msgid "-unused-Special: Camera Roll"
-msgstr ""
+msgstr "-לא בשימוש-מיוחד: סרט צילום"
 
 msgctxt "#32009"
 msgid "-unused-Special: Music"
-msgstr ""
+msgstr "-לא בשימוש-מיוחד: מוזיקה"
 
 msgctxt "#32010"
 msgid "Recursive auto-refreshed slideshow"
