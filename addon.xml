@@ -34,5 +34,6 @@ Play all your media from Google Drive including Videos, Music and Pictures.
 		<source>https://github.com/cguZZman/plugin.googledrive</source>
 		<forum>https://github.com/cguZZman/plugin.googledrive/issues</forum>
 		<website>https://addons.kodi.tv/show/plugin.googledrive</website>
+		<news>v1.0.0 - Nov 6, 2017: First release</news>
 	</extension>
 </addon>
