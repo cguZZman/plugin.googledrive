@@ -121,7 +121,7 @@ class GoogleDriveAddon(CloudDriveAddon):
         self._provider.configure(self._account_manager, driveid)
         item_driveid = Utils.default(item_driveid, driveid)
         self._parameters['fields'] = 'files(%s)' % self._file_fileds
-        query = 'fullText contains \'%s\'' % query
+        query = 'fullText contains \'%s\'' % Utils.str(query)
         if item_id:
             query += ' and \'%s\' in parents' % item_id
         self._parameters['q'] = query
@@ -132,19 +132,21 @@ class GoogleDriveAddon(CloudDriveAddon):
     
     def process_files(self, driveid, files, on_items_page_completed=None):
         items = []
-        for f in files['files']:
-            item = self._extract_item(f)
-            cache_key = self._addonid+'-drive-'+driveid+'-item_driveid-'+item['drive_id']+'-item_id-'+item['id']+'-path-None'
-            self._cache.set(cache_key, f, expiration=datetime.timedelta(minutes=1))
-            items.append(item)
-        if on_items_page_completed:
-            on_items_page_completed(items)
-        if 'nextPageToken' in files:
-            self._parameters['pageToken'] = files['nextPageToken']
-            next_files = self._provider.get('/files', parameters = self._parameters)
-            if self.cancel_operation():
-                return
-            items.extend(self.process_files(driveid, next_files, on_items_page_completed))
+        if files:
+            if 'files' in files:
+                for f in files['files']:
+                    item = self._extract_item(f)
+                    cache_key = self._addonid+'-drive-'+Utils.str(driveid)+'-item_driveid-'+Utils.str(item['drive_id'])+'-item_id-'+Utils.str(item['id'])+'-path-None'
+                    self._cache.set(cache_key, f, expiration=datetime.timedelta(minutes=1))
+                    items.append(item)
+                if on_items_page_completed:
+                    on_items_page_completed(items)
+            if 'nextPageToken' in files:
+                self._parameters['pageToken'] = files['nextPageToken']
+                next_files = self._provider.get('/files', parameters = self._parameters)
+                if self.cancel_operation():
+                    return
+                items.extend(self.process_files(driveid, next_files, on_items_page_completed))
         return items
     
     def _extract_item(self, f, include_download_info=False):
@@ -208,13 +210,13 @@ class GoogleDriveAddon(CloudDriveAddon):
         for part in parts:
             part = urllib.unquote(part)
             current_path += '/%s' % part
-            self._parameters['q'] = '\'%s\' in parents and name = \'%s\'' % (parent, part)
+            self._parameters['q'] = '\'%s\' in parents and name = \'%s\'' % (Utils.str(parent), Utils.str(part))
             files = self._provider.get('/files', parameters = self._parameters)
             if (len(files['files']) > 0):
                 for f in files['files']:
                     item = self._extract_item(f, include_download_info)
                     parent = item['id']
-                    cache_key = self._addonid+'-drive-None-item_driveid-None-item_id-None-path-'+current_path
+                    cache_key = self._addonid+'-drive-None-item_driveid-None-item_id-None-path-'+Utils.str(current_path)
                     self._cache.set(cache_key, f, expiration=datetime.timedelta(minutes=1))
                     break
             else:
@@ -227,13 +229,13 @@ class GoogleDriveAddon(CloudDriveAddon):
     def get_item(self, driveid, item_driveid=None, item_id=None, path=None, find_subtitles=False, include_download_info=False):
         self._provider.configure(self._account_manager, driveid)
         item_driveid = Utils.default(item_driveid, driveid)
-        cache_key = self._addonid+'-drive-'+driveid+'-item_driveid-'+Utils.str(item_driveid)+'-item_id-'+Utils.str(item_id)+'-path-'+Utils.str(path)
-        f = self._cache.get(cache_key)
+        all_cache_key = self._addonid+'-drive-'+Utils.str(driveid)+'-item_driveid-'+Utils.str(item_driveid)+'-item_id-'+Utils.str(item_id)+'-path-'+Utils.str(path)
+        f = self._cache.get(all_cache_key)
         if f:
             item = self._extract_item(f, include_download_info)
         else:
-            cache_key = self._addonid+'-drive-None-item_driveid-None-item_id-None-path-'+path
-            f = self._cache.get(cache_key)
+            path_cache_key = self._addonid+'-drive-None-item_driveid-None-item_id-None-path-'+Utils.str(path)
+            f = self._cache.get(path_cache_key)
             if f:
                 item = self._extract_item(f, include_download_info)
             else:
@@ -242,14 +244,14 @@ class GoogleDriveAddon(CloudDriveAddon):
                     item_id = 'root'
                 if item_id:
                     f = self._provider.get('/files/%s' % item_id, parameters = self._parameters)
-                    self._cache.set(cache_key, f, expiration=datetime.timedelta(seconds=59))
+                    self._cache.set(all_cache_key, f, expiration=datetime.timedelta(seconds=59))
                     item = self._extract_item(f, include_download_info)
                 else:
                     item = self.get_item_by_path(path, include_download_info)
         
         if find_subtitles:
             subtitles = []
-            self._parameters['q'] = 'name contains \'%s\'' % urllib.quote(Utils.remove_extension(item['name']))
+            self._parameters['q'] = 'name contains \'%s\'' % Utils.str(Utils.remove_extension(item['name']))
             files = self._provider.get('/files', parameters = self._parameters)
             for f in files['files']:
                 subtitle = self._extract_item(f, include_download_info)
