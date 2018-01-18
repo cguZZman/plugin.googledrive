@@ -112,6 +112,8 @@ class GoogleDriveAddon(CloudDriveAddon):
             else:
                 item = self.get_item_by_path(path)
                 self._parameters['q'] = '\'%s\' in parents' % item['id']
+        if 'q' in self._parameters:
+            self._parameters['q'] += ' and not trashed'
         files = self._provider.get('/files', parameters = self._parameters)
         if self.cancel_operation():
             return
