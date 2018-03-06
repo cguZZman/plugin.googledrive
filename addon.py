@@ -19,12 +19,15 @@
 
 import datetime
 import urllib
+from urllib2 import HTTPError
+import urlparse
 
 from clouddrive.common.cache.simplecache import SimpleCache
+from clouddrive.common.remote.request import Request
 from clouddrive.common.ui.addon import CloudDriveAddon
+from clouddrive.common.ui.utils import KodiUtils
 from clouddrive.common.utils import Utils
 from resources.lib.provider.googledrive import GoogleDrive
-from urllib2 import HTTPError
 
 
 class GoogleDriveAddon(CloudDriveAddon):
@@ -253,6 +256,7 @@ class GoogleDriveAddon(CloudDriveAddon):
         
         if find_subtitles:
             subtitles = []
+            self._parameters['fields'] = 'files(' + self._file_fileds + ')'
             self._parameters['q'] = 'name contains \'%s\'' % Utils.str(Utils.remove_extension(item['name']))
             files = self._provider.get('/files', parameters = self._parameters)
             for f in files['files']:
@@ -262,6 +266,47 @@ class GoogleDriveAddon(CloudDriveAddon):
             if subtitles:
                 item['subtitles'] = subtitles
         return item
+    
+    def _get_item_play_url(self, file_name, driveid, item_driveid=None, item_id=None):
+        url = None
+        if KodiUtils.get_addon_setting('ask_stream_format') == 'true':
+            url = self._select_stream_format(driveid, item_driveid, item_id)
+        if not url:
+            url = super(GoogleDriveAddon, self)._get_item_play_url(file_name, driveid, item_driveid, item_id)
+        return url
+    
+    def _select_stream_format(self, driveid, item_driveid=None, item_id=None):
+        url = None
+        self._progress_dialog.update(0, self._addon.getLocalizedString(32009))
+        self._provider.configure(self._account_manager, driveid)
+        self.get_item(driveid, item_driveid, item_id)
+        request = Request('https://drive.google.com/get_video_info', urllib.urlencode({'docid' : item_id}), {'authorization': 'Bearer %s' % self._provider.get_access_tokens()['access_token']})
+        response_text = request.request()
+        response_params = dict(urlparse.parse_qsl(response_text))
+        self._progress_dialog.close()
+        if Utils.get_safe_value(response_params, 'status', '') == 'ok':
+            fmt_list = Utils.get_safe_value(response_params, 'fmt_list', '').split(',')
+            stream_formats = [self._addon.getLocalizedString(32015)]
+            for fmt in fmt_list:
+                data = fmt.split('/')
+                stream_formats.append(data[1])
+            select = self._dialog.select(self._addon.getLocalizedString(32016), stream_formats, 8000)
+            if select > 0:
+                data = fmt_list[select-1].split('/')
+                fmt_stream_map = Utils.get_safe_value(response_params, 'fmt_stream_map', '').split(',')
+                
+                for fmt in fmt_stream_map:
+                    stream_data = fmt.split('|')
+                    if stream_data[0] == data[0]:
+                        url = stream_data[1]
+                        break
+                if url:
+                    cookie_header = ''
+                    for cookie in request.response_cookies:
+                        if cookie_header: cookie_header += ';'
+                        cookie_header += cookie.name + '=' + cookie.value;
+                    url += '|cookie=' + urllib.quote(cookie_header)
+        return url;
     
 if __name__ == '__main__':
     GoogleDriveAddon().route()

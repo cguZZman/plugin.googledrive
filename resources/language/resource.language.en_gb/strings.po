@@ -49,11 +49,11 @@ msgid "Google Photos"
 msgstr ""
 
 msgctxt "#32008"
-msgid "-unused-Special: Camera Roll"
+msgid "Always ask for the stream format before play"
 msgstr ""
 
 msgctxt "#32009"
-msgid "-unused-Special: Music"
+msgid "Loading stream formats..."
 msgstr ""
 
 msgctxt "#32010"
@@ -74,4 +74,12 @@ msgstr ""
 
 msgctxt "#32014"
 msgid "Starred"
+msgstr ""
+
+msgctxt "#32015"
+msgid "Original format"
+msgstr ""
+
+msgctxt "#32016"
+msgid "Select the stream format"
 msgstr ""
