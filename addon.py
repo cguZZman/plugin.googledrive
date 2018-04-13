@@ -257,7 +257,7 @@ class GoogleDriveAddon(CloudDriveAddon):
         if find_subtitles:
             subtitles = []
             self._parameters['fields'] = 'files(' + self._file_fileds + ')'
-            self._parameters['q'] = 'name contains \'%s\'' % Utils.str(Utils.remove_extension(item['name']))
+            self._parameters['q'] = 'name contains \'%s\'' % Utils.str(Utils.remove_extension(item['name'])).replace("'","\\'")
             files = self._provider.get('/files', parameters = self._parameters)
             for f in files['files']:
                 subtitle = self._extract_item(f, include_download_info)
