@@ -28,10 +28,12 @@ from clouddrive.common.ui.addon import CloudDriveAddon
 from clouddrive.common.ui.utils import KodiUtils
 from clouddrive.common.utils import Utils
 from resources.lib.provider.googledrive import GoogleDrive
+from resources.lib.provider.googlephotos import GooglePhotos
 
 
 class GoogleDriveAddon(CloudDriveAddon):
     _provider = GoogleDrive()
+    _photos_provider = GooglePhotos()
     _parameters = {'spaces': 'drive', 'prettyPrint': 'false'}
     _file_fileds = 'id,name,mimeType,description,hasThumbnail,thumbnailLink,modifiedTime,owners(permissionId),parents,size,imageMediaMetadata(width),videoMediaMetadata'
     _cache = None
@@ -100,24 +102,33 @@ class GoogleDriveAddon(CloudDriveAddon):
         return change_token
     
     def get_folder_items(self, driveid, item_driveid=None, item_id=None, path=None, on_items_page_completed=None):
-        self._provider.configure(self._account_manager, driveid)
         item_driveid = Utils.default(item_driveid, driveid)
         self._parameters['fields'] = 'files(%s),nextPageToken' % self._file_fileds
+        is_album = 'is_album' in self._addon_params
         if item_id:
             self._parameters['q'] = '\'%s\' in parents' % item_id
         elif path == 'sharedWithMe' or path == 'starred':
             self._parameters['q'] = path
-        elif path == 'photos':
-            self._parameters['spaces'] = path
-        else:
+        elif path != 'photos':
             if path == '/':
                 self._parameters['q'] = '\'root\' in parents'
-            else:
+            elif not is_album:
                 item = self.get_item_by_path(path)
                 self._parameters['q'] = '\'%s\' in parents' % item['id']
         if 'q' in self._parameters:
             self._parameters['q'] += ' and not trashed'
-        files = self._provider.get('/files', parameters = self._parameters)
+        if path == 'photos':
+            self._photos_provider.configure(self._account_manager, driveid)
+            files = self._photos_provider.get('/albums')
+            files['is_album'] = True
+        elif is_album:
+            self._photos_provider.configure(self._account_manager, driveid)
+            files = self._photos_provider.post('/mediaItems:search', parameters = {'pageSize': '1000', 'albumId': item_id})
+            files['is_media_items'] = True
+        else:
+            self._provider.configure(self._account_manager, driveid)
+            files = self._provider.get('/files', parameters = self._parameters)
+            files['is_album'] = False
         if self.cancel_operation():
             return
         return self.process_files(driveid, files, on_items_page_completed)
@@ -138,8 +149,18 @@ class GoogleDriveAddon(CloudDriveAddon):
     def process_files(self, driveid, files, on_items_page_completed=None):
         items = []
         if files:
-            if 'files' in files:
-                for f in files['files']:
+            is_album = Utils.get_safe_value(files, 'is_album', False)
+            is_media_items = Utils.get_safe_value(files, 'is_media_items', False)
+            if is_album:
+                collection = 'albums'
+            elif is_media_items:
+                collection = 'mediaItems'
+            else:
+                collection = 'files'
+            if collection in files:
+                for f in files[collection]:
+                    f['is_album'] = is_album
+                    f['is_media_items'] = is_media_items
                     item = self._extract_item(f)
                     cache_key = self._addonid+'-drive-'+Utils.str(driveid)+'-item_driveid-'+Utils.str(item['drive_id'])+'-item_id-'+Utils.str(item['id'])+'-path-None'
                     self._cache.set(cache_key, f, expiration=datetime.timedelta(minutes=1))
@@ -151,17 +172,30 @@ class GoogleDriveAddon(CloudDriveAddon):
                 next_files = self._provider.get('/files', parameters = self._parameters)
                 if self.cancel_operation():
                     return
+                next_files['is_album'] = is_album
                 items.extend(self.process_files(driveid, next_files, on_items_page_completed))
+            elif 'pageToken' in self._parameters:
+                del self._parameters['pageToken']
         return items
     
     def _extract_item(self, f, include_download_info=False):
         size = long('%s' % Utils.get_safe_value(f, 'size', 0))
+        is_album = Utils.get_safe_value(f, 'is_album', False)
+        is_media_items = Utils.get_safe_value(f, 'is_media_items', False)
+        if is_album:
+            mimetype = 'application/vnd.google-apps.folder'
+            name = f['title']
+        else:
+            mimetype = Utils.get_safe_value(f, 'mimeType', '')
+            name = Utils.get_safe_value(f, 'name', '')
+        if is_media_items:
+            name = Utils.get_safe_value(f, 'id', '')
         item = {
             'id': f['id'],
-            'name': f['name'],
-            'name_extension' : Utils.get_extension(f['name']),
+            'name': name,
+            'name_extension' : Utils.get_extension(name),
             'drive_id' : Utils.get_safe_value(Utils.get_safe_value(f, 'owners', [{}])[0], 'permissionId'),
-            'mimetype' : Utils.get_safe_value(f, 'mimeType', ''),
+            'mimetype' : mimetype,
             'last_modified_date' : Utils.get_safe_value(f,'modifiedTime'),
             'size': size,
             'description': Utils.get_safe_value(f, 'description', '')
@@ -170,6 +204,14 @@ class GoogleDriveAddon(CloudDriveAddon):
             item['folder'] = {
                 'child_count' : 0
             }
+        if is_media_items:
+            item['url'] = f['baseUrl']
+            if 'mediaMetadata' in f:
+                metadata = f['mediaMetadata']
+                item['video'] = {
+                    'width' : Utils.get_safe_value(metadata, 'width'),
+                    'height' : Utils.get_safe_value(metadata, 'height')
+                }
         if 'videoMediaMetadata' in f:
             video = f['videoMediaMetadata']
             item['video'] = {
@@ -177,24 +219,32 @@ class GoogleDriveAddon(CloudDriveAddon):
                 'height' : Utils.get_safe_value(video, 'height'),
                 'duration' : long('%s' % Utils.get_safe_value(video, 'durationMillis', 0)) / 1000
             }
-        if 'imageMediaMetadata' in f:
+        if 'imageMediaMetadata' in f or 'mediaMetadata' in f:
             item['image'] = {
                 'size' : size
             }
         if 'hasThumbnail' in f and f['hasThumbnail']:
             item['thumbnail'] = Utils.get_safe_value(f, 'thumbnailLink')
+        if is_album:
+            item['thumbnail'] = Utils.get_safe_value(f, 'coverPhotoBaseUrl')
+            item['extra_params'] = {'is_album' : True}
         if include_download_info:
-            parameters = {
-                'alt': 'media',
-                'access_token': self._provider.get_access_tokens()['access_token']
-            }
-            url = self._provider._get_api_url() + '/files/%s' % item['id']
-            if 'size' not in f and item['mimetype'] == 'application/vnd.google-apps.document':
-                url += '/export'
-                parameters['mimeType'] = self.get_mimetype_by_extension(item['name_extension'])
-            item['download_info'] =  {
-                'url' : url + '?%s' % urllib.urlencode(parameters)
-            }
+            if is_media_items:
+                item['download_info'] =  {
+                    'url' : f['baseUrl']
+                }
+            else:
+                parameters = {
+                    'alt': 'media',
+                    'access_token': self._provider.get_access_tokens()['access_token']
+                }
+                url = self._provider._get_api_url() + '/files/%s' % item['id']
+                if 'size' not in f and item['mimetype'] == 'application/vnd.google-apps.document':
+                    url += '/export'
+                    parameters['mimeType'] = self.get_mimetype_by_extension(item['name_extension'])
+                item['download_info'] =  {
+                    'url' : url + '?%s' % urllib.urlencode(parameters)
+                }
         return item
     
     def get_mimetype_by_extension(self, extension):
