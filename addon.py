@@ -102,9 +102,9 @@ class GoogleDriveAddon(CloudDriveAddon):
         return change_token
     
     def get_folder_items(self, driveid, item_driveid=None, item_id=None, path=None, on_items_page_completed=None):
+        self._provider.configure(self._account_manager, driveid)
         item_driveid = Utils.default(item_driveid, driveid)
-        self._parameters['fields'] = 'files(%s),nextPageToken' % self._file_fileds
-        is_album = 'is_album' in self._addon_params
+        is_album = self._addon_params and 'is_album' in self._addon_params
         if item_id:
             self._parameters['q'] = '\'%s\' in parents' % item_id
         elif path == 'sharedWithMe' or path == 'starred':
@@ -115,6 +115,8 @@ class GoogleDriveAddon(CloudDriveAddon):
             elif not is_album:
                 item = self.get_item_by_path(path)
                 self._parameters['q'] = '\'%s\' in parents' % item['id']
+                
+        self._parameters['fields'] = 'files(%s),nextPageToken' % self._file_fileds
         if 'q' in self._parameters:
             self._parameters['q'] += ' and not trashed'
         if path == 'photos':
