@@ -26,12 +26,14 @@ from clouddrive.common.utils import Utils
 from clouddrive.common.ui.logger import Logger
 from clouddrive.common.cache.cache import Cache
 from clouddrive.common.ui.utils import KodiUtils
-from clouddrive.common.exception import RequestException
+from clouddrive.common.exception import RequestException, ExceptionUtils
 from urllib2 import HTTPError
 
 class GoogleDrive(Provider):
     _default_parameters = {'spaces': 'drive', 'prettyPrint': 'false'}
     _file_fileds = 'id,name,mimeType,description,hasThumbnail,thumbnailLink,modifiedTime,owners(permissionId),parents,size,imageMediaMetadata(width),videoMediaMetadata'
+    _is_team_drive = False
+    _team_drive_parameters = {'includeTeamDriveItems': 'true', 'supportsTeamDrives': 'true', 'corpora': 'teamDrive', 'teamDriveId': ''}
     _extension_map = {
         'html' : 'text/html',
         'htm' : 'text/html',
@@ -55,7 +57,12 @@ class GoogleDrive(Provider):
     def __init__(self):
         super(GoogleDrive, self).__init__('googledrive')
         self._items_cache = Cache(KodiUtils.get_addon_info('id'), 'items', datetime.timedelta(minutes=KodiUtils.get_cache_expiration_time()))
-        
+    
+    def configure(self, account_manager, driveid):
+        super(GoogleDrive, self).configure(account_manager, driveid)
+        self._account_manager.load()
+        drive = account_manager.get_drive_by_driveid(driveid)
+        self._is_team_drive = drive and 'type' in drive and drive['type'] == 'drive#teamDrive'
         
     def _get_api_url(self):
         return 'https://www.googleapis.com/drive/v3'
@@ -76,8 +83,33 @@ class GoogleDrive(Provider):
             'name' : '',
             'type' : ''
         }]
+        try:
+            response = self.get('/teamdrives', request_params=request_params, access_tokens=access_tokens)
+            if response and 'teamDrives' in response:
+                for drive in response['teamDrives']:
+                    drives.append({
+                        'id' : drive['id'],
+                        'name' : Utils.get_safe_value(drive, 'name', drive['id']),
+                        'type' : drive['kind']
+                    })
+        except RequestException as ex:
+            httpex = ExceptionUtils.extract_exception(ex, HTTPError)
+            if not httpex or httpex.code != 403:
+                raise ex
         return drives
     
+    def get_drive_type_name(self, drive_type):
+        if drive_type == 'drive#teamDrive':
+            return 'Team Drive'
+        return drive_type
+    
+    def prepare_parameters(self):
+        parameters = copy.deepcopy(self._default_parameters)
+        if self._is_team_drive:
+            parameters.update(self._team_drive_parameters)
+            parameters['teamDriveId'] = self._driveid
+        return parameters
+            
     def get_folder_items(self, item_driveid=None, item_id=None, path=None, on_items_page_completed=None, include_download_info=False):
         item_driveid = Utils.default(item_driveid, self._driveid)
         is_album = item_id and item_id[:6] == 'album-'
@@ -87,14 +119,15 @@ class GoogleDrive(Provider):
             item_id = item_id[6:]
             Logger.notice(item_id)
         
-        parameters = copy.deepcopy(self._default_parameters)
+        parameters = self.prepare_parameters()
         if item_id:
             parameters['q'] = '\'%s\' in parents' % item_id
         elif path == 'sharedWithMe' or path == 'starred':
             parameters['q'] = path
         elif path != 'photos':
             if path == '/':
-                parameters['q'] = '\'root\' in parents'
+                parent = self._driveid if self._is_team_drive else 'root'
+                parameters['q'] = '\'%s\' in parents' % parent
             elif not is_album:
                 item = self.get_item_by_path(path, include_download_info)
                 parameters['q'] = '\'%s\' in parents' % item['id']
@@ -123,7 +156,7 @@ class GoogleDrive(Provider):
     
     def search(self, query, item_driveid=None, item_id=None, on_items_page_completed=None):
         item_driveid = Utils.default(item_driveid, self._driveid)
-        parameters = copy.deepcopy(self._default_parameters)
+        parameters = self.prepare_parameters()
         parameters['fields'] = 'files(%s)' % self._file_fileds
         query = 'fullText contains \'%s\'' % Utils.str(query)
         if item_id:
@@ -237,7 +270,7 @@ class GoogleDrive(Provider):
         return self._extension_map['pdf']
     
     def get_item_by_path(self, path, include_download_info=False):
-        parameters = copy.deepcopy(self._default_parameters)
+        parameters = self.prepare_parameters()
         if path[-1:] == '/':
             path = path[:-1]
         Logger.debug(path + ' <- Target')
@@ -270,7 +303,7 @@ class GoogleDrive(Provider):
         return item
     
     def get_item(self, item_driveid=None, item_id=None, path=None, find_subtitles=False, include_download_info=False):
-        parameters = copy.deepcopy(self._default_parameters)
+        parameters = self.prepare_parameters()
         item_driveid = Utils.default(item_driveid, self._driveid)
         parameters['fields'] = self._file_fileds
         if not item_id and path == '/':
