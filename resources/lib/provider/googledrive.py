@@ -269,7 +269,7 @@ class GoogleDrive(Provider):
             else:
                 parent = self.get_item_by_path(parent, include_download_info)['id']
             item = None
-            parameters['q'] = '\'%s\' in parents and name = \'%s\'' % (Utils.str(parent), Utils.str(filename))
+            parameters['q'] = '\'%s\' in parents and name = \'%s\'' % (Utils.str(parent), Utils.str(filename).replace("'","\\'"))
             files = self.get('/files', parameters = parameters)
             if (len(files['files']) > 0):
                 for f in files['files']:
