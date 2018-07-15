@@ -31,33 +31,14 @@ from urllib2 import HTTPError
 
 class GoogleDrive(Provider):
     _default_parameters = {'spaces': 'drive', 'prettyPrint': 'false'}
-    _file_fileds = 'id,name,mimeType,description,hasThumbnail,thumbnailLink,modifiedTime,owners(permissionId),parents,size,imageMediaMetadata(width),videoMediaMetadata'
     _is_team_drive = False
     _team_drive_parameters = {'includeTeamDriveItems': 'true', 'supportsTeamDrives': 'true', 'corpora': 'teamDrive', 'teamDriveId': ''}
-    _extension_map = {
-        'html' : 'text/html',
-        'htm' : 'text/html',
-        'txt' : 'text/plain',
-        'rtf' : 'application/rtf',
-        'odf' : 'application/vnd.oasis.opendocument.text',
-        'pdf' : 'application/pdf',
-        'doc' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'docx' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'epub' : 'application/epub+zip',
-        'xls' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'sxc' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'csv' : 'text/csv',
-        'ppt' : 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        'pptx' : 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        'sxi' : 'application/vnd.oasis.opendocument.presentation',
-        'json' : 'application/vnd.google-apps.script+json'
-    }    
     _user = None
 
-    def __init__(self):
-        super(GoogleDrive, self).__init__('googledrive')
+    def __init__(self, source_mode = False):
+        super(GoogleDrive, self).__init__('googledrive', source_mode)
         self._items_cache = Cache(KodiUtils.get_addon_info('id'), 'items', datetime.timedelta(minutes=KodiUtils.get_cache_expiration_time()))
-    
+            
     def configure(self, account_manager, driveid):
         super(GoogleDrive, self).configure(account_manager, driveid)
         self._account_manager.load()
@@ -109,7 +90,13 @@ class GoogleDrive(Provider):
             parameters.update(self._team_drive_parameters)
             parameters['teamDriveId'] = self._driveid
         return parameters
-            
+    
+    def _get_field_parameters(self):
+        file_fileds = 'id,name,modifiedTime,size,mimeType'
+        if not self.source_mode:
+            file_fileds = file_fileds + ',description,hasThumbnail,thumbnailLink,owners(permissionId),parents,imageMediaMetadata(width),videoMediaMetadata'
+        return file_fileds
+        
     def get_folder_items(self, item_driveid=None, item_id=None, path=None, on_items_page_completed=None, include_download_info=False):
         item_driveid = Utils.default(item_driveid, self._driveid)
         is_album = item_id and item_id[:6] == 'album-'
@@ -132,7 +119,7 @@ class GoogleDrive(Provider):
                 item = self.get_item_by_path(path, include_download_info)
                 parameters['q'] = '\'%s\' in parents' % item['id']
                 
-        parameters['fields'] = 'files(%s),nextPageToken' % self._file_fileds
+        parameters['fields'] = 'files(%s),nextPageToken' % self._get_field_parameters()
         if 'q' in parameters:
             parameters['q'] += ' and not trashed'
         if path == 'photos':
@@ -157,7 +144,7 @@ class GoogleDrive(Provider):
     def search(self, query, item_driveid=None, item_id=None, on_items_page_completed=None):
         item_driveid = Utils.default(item_driveid, self._driveid)
         parameters = self.prepare_parameters()
-        parameters['fields'] = 'files(%s)' % self._file_fileds
+        parameters['fields'] = 'files(%s)' % self._get_field_parameters()
         query = 'fullText contains \'%s\'' % Utils.str(query)
         if item_id:
             query += ' and \'%s\' in parents' % item_id
@@ -258,16 +245,11 @@ class GoogleDrive(Provider):
                 url = self._get_api_url() + '/files/%s' % item['id']
                 if 'size' not in f and item['mimetype'] == 'application/vnd.google-apps.document':
                     url += '/export'
-                    parameters['mimeType'] = self.get_mimetype_by_extension(item['name_extension'])
+                    parameters['mimeType'] = Utils.default(Utils.get_mimetype_by_extension(item['name_extension']), Utils.get_mimetype_by_extension('pdf'))
                 item['download_info'] =  {
                     'url' : url + '?%s' % urllib.urlencode(parameters)
                 }
         return item
-    
-    def get_mimetype_by_extension(self, extension):
-        if extension and extension in self._extension_map:
-            return self._extension_map[extension]
-        return self._extension_map['pdf']
     
     def get_item_by_path(self, path, include_download_info=False):
         parameters = self.prepare_parameters()
@@ -278,7 +260,7 @@ class GoogleDrive(Provider):
         Logger.debug('Testing item from cache: %s' % key)
         item = self._items_cache.get(key)
         if not item:
-            parameters['fields'] = 'files(%s)' % self._file_fileds
+            parameters['fields'] = 'files(%s)' % self._get_field_parameters()
             index = path.rfind('/')
             filename = urllib.unquote(path[index+1:])
             parent = path[0:index]
@@ -305,7 +287,7 @@ class GoogleDrive(Provider):
     def get_item(self, item_driveid=None, item_id=None, path=None, find_subtitles=False, include_download_info=False):
         parameters = self.prepare_parameters()
         item_driveid = Utils.default(item_driveid, self._driveid)
-        parameters['fields'] = self._file_fileds
+        parameters['fields'] = self._get_field_parameters()
         if not item_id and path == '/':
             item_id = 'root'
         if item_id:
@@ -316,7 +298,7 @@ class GoogleDrive(Provider):
         
         if find_subtitles:
             subtitles = []
-            parameters['fields'] = 'files(' + self._file_fileds + ')'
+            parameters['fields'] = 'files(' + self._get_field_parameters() + ')'
             parameters['q'] = 'name contains \'%s\'' % Utils.str(Utils.remove_extension(item['name'])).replace("'","\\'")
             files = self.get('/files', parameters = parameters)
             for f in files['files']:
