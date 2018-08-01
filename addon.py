@@ -100,7 +100,9 @@ class GoogleDriveAddon(CloudDriveAddon):
                 stream_formats.append(data[1])
             stream_formats.append(self._addon.getLocalizedString(32015))
             select = self._dialog.select(self._addon.getLocalizedString(32016), stream_formats, 8000)
-            if select != len(stream_formats) - 1:
+            if select == -1:
+                self._cancel_operation = True
+            elif select != len(stream_formats) - 1:
                 data = fmt_list[select].split('/')
                 fmt_stream_map = Utils.get_safe_value(response_params, 'fmt_stream_map', '').split(',')
                 
