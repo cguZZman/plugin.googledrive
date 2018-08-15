@@ -99,7 +99,7 @@ class GoogleDriveAddon(CloudDriveAddon):
                 data = fmt.split('/')
                 stream_formats.append(data[1])
             stream_formats.append(self._addon.getLocalizedString(32015))
-            select = self._dialog.select(self._addon.getLocalizedString(32016), stream_formats, 8000)
+            select = self._dialog.select(self._addon.getLocalizedString(32016), stream_formats, 8000, 0)
             if select == -1:
                 self._cancel_operation = True
             elif select != len(stream_formats) - 1:
