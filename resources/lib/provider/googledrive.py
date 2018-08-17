@@ -100,12 +100,8 @@ class GoogleDrive(Provider):
     def get_folder_items(self, item_driveid=None, item_id=None, path=None, on_items_page_completed=None, include_download_info=False):
         item_driveid = Utils.default(item_driveid, self._driveid)
         is_album = item_id and item_id[:6] == 'album-'
-        
         if is_album:
-            Logger.notice(item_id)
             item_id = item_id[6:]
-            Logger.notice(item_id)
-        
         parameters = self.prepare_parameters()
         if item_id:
             parameters['q'] = '\'%s\' in parents' % item_id
@@ -169,7 +165,9 @@ class GoogleDrive(Provider):
             if collection:
                 for f in collection:
                     f['kind'] = Utils.get_safe_value(f, 'kind', kind)
-                    items.append(self._extract_item(f, include_download_info))
+                    item = self._extract_item(f, include_download_info)
+                    if item:
+                        items.append(item)
                 if on_items_page_completed:
                     on_items_page_completed(items)
             if type(extra_info) is dict:
@@ -177,16 +175,29 @@ class GoogleDrive(Provider):
                     extra_info['change_token'] = files['newStartPageToken']
             if 'nextPageToken' in files:
                 parameters['pageToken'] = files['nextPageToken']
-                next_files = self.get('/files', parameters = parameters)
+                url = '/files'
+                provider = self
+                if kind == 'drive#changeList':
+                    url = '/changes'
+                elif kind == 'album':
+                    url = '/albums'
+                    provider = self._photos_provider
+                elif kind == 'media_item':
+                    url = '/mediaItems:search'
+                    provider = self._photos_provider
+                next_files = provider.get(url, parameters = parameters)
                 if self.cancel_operation():
                     return
-                items.extend(self.process_files(next_files, parameters, on_items_page_completed, include_download_info))
+                items.extend(self.process_files(next_files, parameters, on_items_page_completed, include_download_info, extra_info))
         return items
     
     def _extract_item(self, f, include_download_info=False):
         kind = Utils.get_safe_value(f, 'kind', '')
         if kind == 'drive#change':
-            f = f['file']
+            if 'file' in f:
+                f = f['file']
+            else:
+                return {}
         size = long('%s' % Utils.get_safe_value(f, 'size', 0))
         is_album = kind == 'album'
         is_media_items = kind == 'media_item'
