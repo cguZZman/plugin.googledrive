@@ -335,7 +335,7 @@ class GoogleDrive(Provider):
         parameters['pageToken'] = change_token
         parameters['fields'] = 'kind,nextPageToken,newStartPageToken,changes(kind,type,removed,file(%s))' % self._get_field_parameters()
         f = self.get('/changes', parameters = parameters)
-        changes = self.process_files(f, parameters, extra_info=extra_info)
+        changes = self.process_files(f, parameters, include_download_info=True, extra_info=extra_info)
         self.persist_change_token(Utils.get_safe_value(extra_info, 'change_token'))
         return changes
     
