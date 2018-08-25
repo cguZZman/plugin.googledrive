@@ -65,14 +65,24 @@ class GoogleDrive(Provider):
             'type' : ''
         }]
         try:
-            response = self.get('/teamdrives', request_params=request_params, access_tokens=access_tokens)
-            if response and 'teamDrives' in response:
-                for drive in response['teamDrives']:
-                    drives.append({
-                        'id' : drive['id'],
-                        'name' : Utils.get_safe_value(drive, 'name', drive['id']),
-                        'type' : drive['kind']
-                    })
+            all_teamdrives_fetch = False
+            page_token = None
+            parameters = {'pageSize': 100}
+            while not all_teamdrives_fetch:
+                if page_token:
+                    parameters['nextPageToken'] = page_token
+                response = self.get('/teamdrives', parameters=parameters, request_params=request_params, access_tokens=access_tokens)
+                if response and 'teamDrives' in response:
+                    for drive in response['teamDrives']:
+                        drives.append({
+                            'id' : drive['id'],
+                            'name' : Utils.get_safe_value(drive, 'name', drive['id']),
+                            'type' : drive['kind']
+                        })
+                if response and 'nextPageToken' in response:
+                    page_token = response['nextPageToken']
+                else:
+                    all_teamdrives_fetch = True
         except RequestException as ex:
             httpex = ExceptionUtils.extract_exception(ex, HTTPError)
             if not httpex or httpex.code != 403:
