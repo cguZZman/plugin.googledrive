@@ -2,7 +2,7 @@
 <addon id="plugin.googledrive" name="Google Drive" version="1.2.4" provider-name="Carlos Guzman (cguZZman)">
 	<requires>
 		<import addon="xbmc.python" version="2.25.0" />
-		<import addon="script.module.clouddrive.common" version="1.2.1"/>
+		<import addon="script.module.clouddrive.common" version="1.2.3"/>
 	</requires>
 	<extension point="xbmc.python.pluginsource" library="addon.py">
 		<provides>image audio video</provides>
