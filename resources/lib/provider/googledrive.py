@@ -312,7 +312,7 @@ class GoogleDrive(Provider):
             self._items_cache.set(key, item)
         return item
     
-    def get_subtitles(self, name, item_driveid=None, include_download_info=False):
+    def get_subtitles(self, parent, name, item_driveid=None, include_download_info=False):
         parameters = self.prepare_parameters()
         item_driveid = Utils.default(item_driveid, self._driveid)
         subtitles = []
@@ -338,7 +338,7 @@ class GoogleDrive(Provider):
             item = self.get_item_by_path(path, include_download_info)
         
         if find_subtitles:
-            subtitles = self.get_subtitles(item['name'], item_driveid, include_download_info)
+            subtitles = self.get_subtitles(item['parent'], item['name'], item_driveid, include_download_info)
             if subtitles:
                 item['subtitles'] = subtitles
         return item
