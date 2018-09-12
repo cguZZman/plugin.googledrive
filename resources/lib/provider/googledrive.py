@@ -250,6 +250,7 @@ class GoogleDrive(Provider):
                     'width' : Utils.get_safe_value(metadata, 'width'),
                     'height' : Utils.get_safe_value(metadata, 'height')
                 }
+                item['last_modified_date'] = Utils.get_safe_value(metadata, 'creationTime')
         if 'videoMediaMetadata' in f:
             video = f['videoMediaMetadata']
             item['video'] = {
