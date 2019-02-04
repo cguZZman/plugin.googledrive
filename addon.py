@@ -86,42 +86,67 @@ class GoogleDriveAddon(CloudDriveAddon):
     
     def _select_stream_format(self, driveid, item_driveid=None, item_id=None):
         url = None
+        stream_formats = self._get_stream_formats(self, driveid, item_driveid, item_id)
+        select = -1
+        if KodiUtils.get_addon_setting('ask_stream_format') == 'true':
+            select = self._dialog.select(self._addon.getLocalizedString(32016), stream_formats, 8000, 0)
+        else
+            select = self._auto_select_stream(stream_formats)
+        Logger.debug('Selected: %s' % Utils.str(select))
+        if select == -1:
+            self._cancel_operation = True
+        elif select != len(stream_formats) - 1:
+            data = fmt_list[select].split('/')
+            fmt_stream_map = Utils.get_safe_value(response_params, 'fmt_stream_map', '').split(',')
+            
+            for fmt in fmt_stream_map:
+                stream_data = fmt.split('|')
+                if stream_data[0] == data[0]:
+                    url = stream_data[1]
+                    break
+            if url:
+                cookie_header = ''
+                for cookie in request.response_cookies:
+                    if cookie_header: cookie_header += ';'
+                    cookie_header += cookie.name + '=' + cookie.value;
+                url += '|cookie=' + urllib.quote(cookie_header)
+        return url;
+        
+    def _auto_select_stream(self, streams):
+        select = -1
+        allowedQualitied = ['original','1080p','720p','480p','360p']
+        max_qual = KodiUtils.get_addon_setting('default_stream_quality')
+            if max_qual == '1080p'
+                allowedQualitied = ['1080p','720p','480p','360p','original']
+            elif max_qual == '720p'
+                allowedQualitied = ['720p','480p','360p','original']
+            elif max_qual == '480p'
+                allowedQualitied = ['480p','360p','original']
+            elif max_qual == '360p'
+                allowedQualitied = ['360p','original']
+            for q in allowedQualitied
+                if q in streams
+                    select = streams.index(q)
+                    break
+        return select
+    
+    def _get_stream_formats(self, driveid, item_driveid=None, item_id=None):
         self._progress_dialog.update(0, self._addon.getLocalizedString(32009))
         self._provider.configure(self._account_manager, driveid)
         self._provider.get_item(item_driveid, item_id)
         request = Request('https://drive.google.com/get_video_info', urllib.urlencode({'docid' : item_id}), {'authorization': 'Bearer %s' % self._provider.get_access_tokens()['access_token']})
         response_text = request.request()
         response_params = dict(urlparse.parse_qsl(response_text))
-        self._progress_dialog.close()
+        stream_formats = []
         if Utils.get_safe_value(response_params, 'status', '') == 'ok':
             fmt_list = Utils.get_safe_value(response_params, 'fmt_list', '').split(',')
-            stream_formats = []
             for fmt in fmt_list:
                 data = fmt.split('/')
                 stream_formats.append(data[1])
-            stream_formats.append(self._addon.getLocalizedString(32015))
-            Logger.debug('Stream formats: %s' % Utils.str(stream_formats))
-            select = self._dialog.select(self._addon.getLocalizedString(32016), stream_formats, 8000, 0)
-            Logger.debug('Selected: %s' % Utils.str(select))
-            if select == -1:
-                self._cancel_operation = True
-            elif select != len(stream_formats) - 1:
-                data = fmt_list[select].split('/')
-                fmt_stream_map = Utils.get_safe_value(response_params, 'fmt_stream_map', '').split(',')
-                
-                for fmt in fmt_stream_map:
-                    stream_data = fmt.split('|')
-                    if stream_data[0] == data[0]:
-                        url = stream_data[1]
-                        break
-                if url:
-                    cookie_header = ''
-                    for cookie in request.response_cookies:
-                        if cookie_header: cookie_header += ';'
-                        cookie_header += cookie.name + '=' + cookie.value;
-                    url += '|cookie=' + urllib.quote(cookie_header)
-        return url;
-    
+        stream_formats.append(self._addon.getLocalizedString(32015))
+        Logger.debug('Stream formats: %s' % Utils.str(stream_formats))
+        self._progress_dialog.close()
+        return stream_formats
 if __name__ == '__main__':
     GoogleDriveAddon().route()
 
