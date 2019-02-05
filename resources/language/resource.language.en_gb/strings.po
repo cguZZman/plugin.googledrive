@@ -131,23 +131,3 @@ msgstr ""
 msgctxt "#32070"
 msgid "Default stream quality"
 msgstr ""
-
-msgctxt "#32071"
-msgid "Original"
-msgstr ""
-
-msgctxt "#32072"
-msgid "1080p"
-msgstr ""
-
-msgctxt "#32073"
-msgid "720p"
-msgstr ""
-
-msgctxt "#32074"
-msgid "480p"
-msgstr ""
-
-msgctxt "#32075"
-msgid "360p"
-msgstr ""
