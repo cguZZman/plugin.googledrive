@@ -127,3 +127,7 @@ msgstr ""
 msgctxt "#32069"
 msgid "     Source server port  -  http://localhost:<port>/source"
 msgstr ""
+
+msgctxt "#32070"
+msgid "Default stream quality"
+msgstr ""
