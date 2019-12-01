@@ -129,5 +129,9 @@ msgid "     Source server port  -  http://localhost:<port>/source"
 msgstr ""
 
 msgctxt "#32070"
-msgid "Default stream quality"
+msgid "Export .nfo files"
+msgstr ""
+
+msgctxt "#32071"
+msgid "Skip unmodified files"
 msgstr ""
