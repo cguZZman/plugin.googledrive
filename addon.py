@@ -78,21 +78,26 @@ class GoogleDriveAddon(CloudDriveAddon):
     
     def _get_item_play_url(self, file_name, driveid, item_driveid=None, item_id=None):
         url = None
-        if KodiUtils.get_addon_setting('ask_stream_format') == 'true':
-            url = self._select_stream_format(driveid, item_driveid, item_id)
+        if KodiUtils.get_addon_setting('ask_stream_format') == 'false':
+            if KodiUtils.get_addon_setting('default_stream_quality') == 'Original':
+                url = super(GoogleDriveAddon, self)._get_item_play_url(file_name, driveid, item_driveid, item_id)
+            else:
+                url = self._select_stream_format(driveid, item_driveid, item_id, True)
         if not url:
-            url = super(GoogleDriveAddon, self)._get_item_play_url(file_name, driveid, item_driveid, item_id)
+            url = self._select_stream_format(driveid, item_driveid, item_id, False)
         return url
     
-    def _select_stream_format(self, driveid, item_driveid=None, item_id=None):
+    def _select_stream_format(self, driveid, item_driveid=None, item_id=None, auto=False):
         url = None
-        self._progress_dialog.update(0, self._addon.getLocalizedString(32009))
+        if auto == False:
+            self._progress_dialog.update(0, self._addon.getLocalizedString(32009))
         self._provider.configure(self._account_manager, driveid)
         self._provider.get_item(item_driveid, item_id)
         request = Request('https://drive.google.com/get_video_info', urllib.urlencode({'docid' : item_id}), {'authorization': 'Bearer %s' % self._provider.get_access_tokens()['access_token']})
         response_text = request.request()
         response_params = dict(urlparse.parse_qsl(response_text))
-        self._progress_dialog.close()
+        if auto == False:
+            self._progress_dialog.close()
         if Utils.get_safe_value(response_params, 'status', '') == 'ok':
             fmt_list = Utils.get_safe_value(response_params, 'fmt_list', '').split(',')
             stream_formats = []
@@ -101,7 +106,11 @@ class GoogleDriveAddon(CloudDriveAddon):
                 stream_formats.append(data[1])
             stream_formats.append(self._addon.getLocalizedString(32015))
             Logger.debug('Stream formats: %s' % Utils.str(stream_formats))
-            select = self._dialog.select(self._addon.getLocalizedString(32016), stream_formats, 8000, 0)
+            select = -1
+            if auto == True:
+                select = self._auto_select_stream(stream_formats)
+            else:
+                select = self._dialog.select(self._addon.getLocalizedString(32016), stream_formats, 8000, 0)
             Logger.debug('Selected: %s' % Utils.str(select))
             if select == -1:
                 self._cancel_operation = True
@@ -121,6 +130,24 @@ class GoogleDriveAddon(CloudDriveAddon):
                         cookie_header += cookie.name + '=' + cookie.value;
                     url += '|cookie=' + urllib.quote(cookie_header)
         return url
+    
+    def _auto_select_stream(self, streams):
+        select = -1
+        allowedQualitied = ['Original format','1920x1080','1280x720','854x480','640x360']
+        max_qual = KodiUtils.get_addon_setting('default_stream_quality')
+        if max_qual == '1080p':
+            allowedQualitied = ['1920x1080','1280x720','854x480','640x360','Original format']
+        elif max_qual == '720p':
+            allowedQualitied = ['1280x720','854x480','640x360','Original format']
+        elif max_qual == '480p':
+            allowedQualitied = ['854x480','640x360','Original format']
+        elif max_qual == '360p':
+            allowedQualitied = ['640x360','Original format']
+        for q in allowedQualitied:
+            if q in streams:
+                select = streams.index(q)
+                break
+        return select
         
 if __name__ == '__main__':
     GoogleDriveAddon().route()
