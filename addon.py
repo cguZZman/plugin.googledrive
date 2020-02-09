@@ -76,27 +76,36 @@ class GoogleDriveAddon(CloudDriveAddon):
                 page_token = Utils.get_safe_value(response, 'nextPageToken')
         return change_token
     
+    def _get_url_original(self, file_name, driveid, item_driveid=None, item_id=None):
+        self._provider.configure(self._account_manager, driveid)
+        item = self._provider.get_item(item_driveid=item_driveid, item_id=item_id, include_download_info = True)
+        url = item['download_info']['url']
+        url += "|Authorization=%s" % urllib.quote("Bearer %s" % self._provider.get_access_tokens()['access_token'])
+        return url
+    
     def _get_item_play_url(self, file_name, driveid, item_driveid=None, item_id=None):
         url = None
         if KodiUtils.get_addon_setting('ask_stream_format') == 'false':
             if KodiUtils.get_addon_setting('default_stream_quality') == 'Original':
-                url = super(GoogleDriveAddon, self)._get_item_play_url(file_name, driveid, item_driveid, item_id)
+                url = self._get_url_original(file_name, driveid, item_driveid, item_id)
             else:
                 url = self._select_stream_format(driveid, item_driveid, item_id, True)
-        if not url:
+        else:
             url = self._select_stream_format(driveid, item_driveid, item_id, False)
+        if not url:
+            url = self._get_url_original(file_name, driveid, item_driveid, item_id)
         return url
     
     def _select_stream_format(self, driveid, item_driveid=None, item_id=None, auto=False):
         url = None
-        if auto == False:
+        if not auto:
             self._progress_dialog.update(0, self._addon.getLocalizedString(32009))
         self._provider.configure(self._account_manager, driveid)
         self._provider.get_item(item_driveid, item_id)
         request = Request('https://drive.google.com/get_video_info', urllib.urlencode({'docid' : item_id}), {'authorization': 'Bearer %s' % self._provider.get_access_tokens()['access_token']})
         response_text = request.request()
         response_params = dict(urlparse.parse_qsl(response_text))
-        if auto == False:
+        if not auto:
             self._progress_dialog.close()
         if Utils.get_safe_value(response_params, 'status', '') == 'ok':
             fmt_list = Utils.get_safe_value(response_params, 'fmt_list', '').split(',')
@@ -107,7 +116,7 @@ class GoogleDriveAddon(CloudDriveAddon):
             stream_formats.append(self._addon.getLocalizedString(32015))
             Logger.debug('Stream formats: %s' % Utils.str(stream_formats))
             select = -1
-            if auto == True:
+            if auto:
                 select = self._auto_select_stream(stream_formats)
             else:
                 select = self._dialog.select(self._addon.getLocalizedString(32016), stream_formats, 8000, 0)

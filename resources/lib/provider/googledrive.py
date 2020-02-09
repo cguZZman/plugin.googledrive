@@ -275,14 +275,14 @@ class GoogleDrive(Provider):
             else:
                 parameters = {
                     'alt': 'media',
-                    'access_token': self.get_access_tokens()['access_token']
                 }
                 url = self._get_api_url() + '/files/%s' % item['id']
                 if 'size' not in f and item['mimetype'] == 'application/vnd.google-apps.document':
                     url += '/export'
                     parameters['mimeType'] = Utils.default(Utils.get_mimetype_by_extension(item['name_extension']), Utils.get_mimetype_by_extension('pdf'))
+                url += '?%s' % urllib.urlencode(parameters)
                 item['download_info'] =  {
-                    'url' : url + '?%s' % urllib.urlencode(parameters)
+                    'url' : url
                 }
         return item
     

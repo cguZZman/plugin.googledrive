@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="plugin.googledrive" name="Google Drive" version="1.3.0" provider-name="Carlos Guzman (cguZZman)">
+<addon id="plugin.googledrive" name="Google Drive" version="1.3.1" provider-name="Carlos Guzman (cguZZman)">
 	<requires>
 		<import addon="xbmc.python" version="2.25.0" />
 		<import addon="script.module.clouddrive.common" version="1.2.8"/>
@@ -37,6 +37,8 @@ Play all your media from Google Drive including Videos, Music and Pictures (incl
 		<forum>https://github.com/cguZZman/plugin.googledrive/issues</forum>
 		<website>https://addons.kodi.tv/show/plugin.googledrive</website>
 		<news>
+v1.3.1 released Feb 10, 2020:
+- Fix playback
 v1.3.0 released Jan 4, 2019:
 - Ability to specify default playback quality
 v1.2.12 released Oct 2, 2018:
