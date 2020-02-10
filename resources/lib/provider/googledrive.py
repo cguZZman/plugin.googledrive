@@ -27,7 +27,16 @@ from clouddrive.common.ui.logger import Logger
 from clouddrive.common.cache.cache import Cache
 from clouddrive.common.ui.utils import KodiUtils
 from clouddrive.common.exception import RequestException, ExceptionUtils
-from urllib2 import HTTPError
+try:
+    from urllib.error import HTTPError
+except ImportError:
+    from urllib2 import HTTPError
+
+try:
+    long
+except NameError:
+    long = int
+
 
 class GoogleDrive(Provider):
     _default_parameters = {'spaces': 'drive', 'prettyPrint': 'false'}
