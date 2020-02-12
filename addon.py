@@ -85,13 +85,14 @@ class GoogleDriveAddon(CloudDriveAddon):
     
     def _get_item_play_url(self, file_name, driveid, item_driveid=None, item_id=None):
         url = None
-        if KodiUtils.get_addon_setting('ask_stream_format') == 'false':
-            if KodiUtils.get_addon_setting('default_stream_quality') == 'Original':
-                url = self._get_url_original(file_name, driveid, item_driveid, item_id)
+        if self._content_type == 'video':
+            if KodiUtils.get_addon_setting('ask_stream_format') == 'false':
+                if KodiUtils.get_addon_setting('default_stream_quality') == 'Original':
+                    url = self._get_url_original(file_name, driveid, item_driveid, item_id)
+                else:
+                    url = self._select_stream_format(driveid, item_driveid, item_id, True)
             else:
-                url = self._select_stream_format(driveid, item_driveid, item_id, True)
-        else:
-            url = self._select_stream_format(driveid, item_driveid, item_id, False)
+                url = self._select_stream_format(driveid, item_driveid, item_id, False)
         if not url:
             url = self._get_url_original(file_name, driveid, item_driveid, item_id)
         return url

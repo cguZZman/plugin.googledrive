@@ -153,7 +153,7 @@ class GoogleDrive(Provider):
     def search(self, query, item_driveid=None, item_id=None, on_items_page_completed=None):
         item_driveid = Utils.default(item_driveid, self._driveid)
         parameters = self.prepare_parameters()
-        parameters['fields'] = 'files(%s)' % self._get_field_parameters()
+        parameters['fields'] = 'files(%s),kind,nextPageToken' % self._get_field_parameters()
         query = 'fullText contains \'%s\'' % Utils.str(query)
         if item_id:
             query += ' and \'%s\' in parents' % item_id
@@ -244,8 +244,12 @@ class GoogleDrive(Provider):
             }
         if is_media_items:
             item['url'] = f['baseUrl'] + '=d'
+            item['thumbnail'] = f['baseUrl'] + '=w100-h100'
             if 'mediaMetadata' in f:
+                
                 metadata = f['mediaMetadata']
+                if 'video' in metadata:
+                    item['url'] += 'v'
                 item['video'] = {
                     'width' : Utils.get_safe_value(metadata, 'width'),
                     'height' : Utils.get_safe_value(metadata, 'height')
