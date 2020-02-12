@@ -36,6 +36,10 @@ Play all your media from Google Drive including Videos, Music and Pictures (incl
 		<source>https://github.com/cguZZman/plugin.googledrive</source>
 		<forum>https://github.com/cguZZman/plugin.googledrive/issues</forum>
 		<website>https://addons.kodi.tv/show/plugin.googledrive</website>
+		<assets>
+			<icon>icon.png</icon>
+			<fanart>fanart.jpg</fanart>
+		</assets>
 		<news>
 v1.3.2 released Feb 12, 2020:
 - Fix video playback in google photos
