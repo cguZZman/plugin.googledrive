@@ -32,7 +32,7 @@ Play all your media from Google Drive including Videos, Music and Pictures (incl
   - שימוש ב-Google Drive כמקור
   - תוכנית זו אינה קשורה או ממומנת על ידי Google.
 		</description>
-		<license>GNU GENERAL PUBLIC LICENSE. Version 3, 29 June 2007</license>
+		<license>SPDX-License-Identifier: GPL-3.0-or-later</license>
 		<source>https://github.com/cguZZman/plugin.googledrive</source>
 		<forum>https://github.com/cguZZman/plugin.googledrive/issues</forum>
 		<website>https://addons.kodi.tv/show/plugin.googledrive</website>
