@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="plugin.googledrive" name="Google Drive" version="1.3.0" provider-name="Carlos Guzman (cguZZman)">
+<addon id="plugin.googledrive" name="Google Drive" version="1.3.3" provider-name="Carlos Guzman (cguZZman)">
 	<requires>
 		<import addon="xbmc.python" version="2.25.0" />
-		<import addon="script.module.clouddrive.common" version="1.3.0"/>
+		<import addon="script.module.clouddrive.common" version="1.2.10"/>
 	</requires>
 	<extension point="xbmc.python.pluginsource" library="addon.py">
 		<provides>image audio video</provides>
@@ -25,26 +25,31 @@ Play all your media from Google Drive including Videos, Music and Pictures (incl
 		<summary lang="he_IL">כונן Google Drive של מיקרוסופט עבור קודי</summary>
 		<description lang="he_IL">
 הפעל את כל המדיה שלך מ- Google Drive כולל וידאו, מוסיקה ותמונות.
-  - מספר בלתי מוגבל של חשבונות.
-  - חיפוש ומציאת הכונן שלך.
-  - ריענון מצגת אוטומטית.
-  - ייצוא קטעי הווידאו לספרייה שלך (קבצי .strm)
-  - שימוש ב-Google Drive כמקור
-  - תוכנית זו אינה קשורה או ממומנת על ידי Google.
+  - מספר בלתי מוגבל של חשבונות.
+  - חיפוש ומציאת הכונן שלך.
+  - ריענון מצגת אוטומטית.
+  - ייצוא קטעי הווידאו לספרייה שלך (קבצי .strm)
+  - שימוש ב-Google Drive כמקור
+  - תוכנית זו אינה קשורה או ממומנת על ידי Google.
 		</description>
-		<license>GNU GENERAL PUBLIC LICENSE. Version 3, 29 June 2007</license>
+		<license>SPDX-License-Identifier: GPL-3.0-or-later</license>
 		<source>https://github.com/cguZZman/plugin.googledrive</source>
 		<forum>https://github.com/cguZZman/plugin.googledrive/issues</forum>
 		<website>https://addons.kodi.tv/show/plugin.googledrive</website>
+		<assets>
+			<icon>icon.png</icon>
+			<fanart>fanart.jpg</fanart>
+		</assets>
 		<news>
-v1.3.0 released Dec 28, 2019:
-- Option to export '.nfo' files
-- Option to remove exported local files
-- Ability to automatically update the 'watched' folder. Add, rename, remove functions works properly now.
-- '.zip' files removed from the export list
-v1.2.13 released Dec 1, 2019:
-- Ability to export nfo files from source
-- Ability to skip unmodified files
+v1.3.3 released Feb 14, 2020:
+- Check for google ban
+v1.3.2 released Feb 12, 2020:
+- Fix video playback in google photos
+- Fix search
+v1.3.1 released Feb 10, 2020:
+- Fix playback
+v1.3.0 released Jan 4, 2019:
+- Ability to specify default playback quality
 v1.2.12 released Oct 2, 2018:
 - Google Photos resolution fix
 v1.2.11 released Sep 20, 2018:
