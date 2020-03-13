@@ -79,7 +79,7 @@ class GoogleDrive(Provider):
             parameters = {'pageSize': 100}
             while not all_teamdrives_fetch:
                 if page_token:
-                    parameters['nextPageToken'] = page_token
+                    parameters['pageToken'] = page_token
                 response = self.get('/teamdrives', parameters=parameters, request_params=request_params, access_tokens=access_tokens)
                 if response and 'teamDrives' in response:
                     for drive in response['teamDrives']:
