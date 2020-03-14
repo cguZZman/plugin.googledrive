@@ -45,6 +45,8 @@ class GoogleDriveAddon(CloudDriveAddon):
     def get_custom_drive_folders(self, driveid):
         self._account_manager.load()
         drive_folders = []
+        if not driveid.isdigit():
+            return drive_folders
         drive_folders.append({'name' : self._common_addon.getLocalizedString(32058), 'path' : 'sharedWithMe'})
         if self._content_type == 'image':
             drive_folders.append({'name' : self._addon.getLocalizedString(32007), 'path' : 'photos'})
