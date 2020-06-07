@@ -141,6 +141,7 @@ class GoogleDrive(Provider):
         self.configure(self._account_manager, self._driveid)
         provider_method = self.get
         url = '/files'
+        parameters['pageSize'] = 1000
         if path == 'photos':
             self._photos_provider = GooglePhotos()
             self._photos_provider.configure(self._account_manager, self._driveid)
@@ -167,6 +168,7 @@ class GoogleDrive(Provider):
         if item_id:
             query += ' and \'%s\' in parents' % item_id
         parameters['q'] = query + ' and not trashed'
+        parameters['pageSize'] = 1000
         files = self.get('/files', parameters = parameters)
         if self.cancel_operation():
             return
@@ -318,6 +320,7 @@ class GoogleDrive(Provider):
                 parent = self.get_item_by_path(parent, include_download_info)['id']
             item = None
             parameters['q'] = '\'%s\' in parents and name = \'%s\'' % (Utils.str(parent), Utils.str(filename).replace("'","\\'"))
+            parameters['pageSize'] = 1000
             files = self.get('/files', parameters = parameters)
             if (len(files['files']) > 0):
                 for f in files['files']:
@@ -338,6 +341,7 @@ class GoogleDrive(Provider):
         subtitles = []
         parameters['fields'] = 'files(' + self._get_field_parameters() + ')'
         parameters['q'] = 'name contains \'%s\'' % Utils.str(Utils.remove_extension(name)).replace("'","\\'")
+        parameters['pageSize'] = 1000
         files = self.get('/files', parameters = parameters)
         for f in files['files']:
             subtitle = self._extract_item(f, include_download_info)
@@ -370,6 +374,7 @@ class GoogleDrive(Provider):
         extra_info = {}
         parameters = self.prepare_parameters()
         parameters['pageToken'] = change_token
+        parameters['pageSize'] = 1000
         parameters['fields'] = 'kind,nextPageToken,newStartPageToken,changes(kind,type,removed,file(%s))' % self._get_field_parameters()
         f = self.get('/changes', parameters = parameters)
         changes = self.process_files(f, parameters, include_download_info=True, extra_info=extra_info)
