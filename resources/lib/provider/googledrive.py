@@ -40,8 +40,8 @@ except NameError:
 
 class GoogleDrive(Provider):
     _default_parameters = {'spaces': 'drive', 'prettyPrint': 'false'}
-    _is_team_drive = False
-    _team_drive_parameters = {'includeTeamDriveItems': 'true', 'supportsTeamDrives': 'true', 'corpora': 'teamDrive', 'teamDriveId': ''}
+    _is_shared_drive = False
+    _shared_drive_parameters = {'includeItemsFromAllDrives': 'true', 'supportsAllDrives': 'true', 'corpora': 'drive', 'driveId': ''}
     _user = None
 
     def __init__(self, source_mode = False):
@@ -51,7 +51,7 @@ class GoogleDrive(Provider):
     def configure(self, account_manager, driveid):
         super(GoogleDrive, self).configure(account_manager, driveid)
         drive = account_manager.get_by_driveid('drive', driveid)
-        self._is_team_drive = drive and 'type' in drive and drive['type'] == 'drive#teamDrive'
+        self._is_shared_drive = drive and 'type' in drive and (drive['type'] == 'drive#drive' or drive['type'] == 'drive#teamDrive')
         
     def _get_api_url(self):
         return 'https://www.googleapis.com/drive/v3'
@@ -73,15 +73,15 @@ class GoogleDrive(Provider):
             'type' : ''
         }]
         try:
-            all_teamdrives_fetch = False
+            all_shareddrives_fetch = False
             page_token = None
             parameters = {'pageSize': 100}
-            while not all_teamdrives_fetch:
+            while not all_shareddrives_fetch:
                 if page_token:
                     parameters['pageToken'] = page_token
-                response = self.get('/teamdrives', parameters=parameters, request_params=request_params, access_tokens=access_tokens)
-                if response and 'teamDrives' in response:
-                    for drive in response['teamDrives']:
+                response = self.get('/drives', parameters=parameters, request_params=request_params, access_tokens=access_tokens)
+                if response and 'drives' in response:
+                    for drive in response['drives']:
                         drives.append({
                             'id' : drive['id'],
                             'name' : Utils.get_safe_value(drive, 'name', drive['id']),
@@ -90,7 +90,7 @@ class GoogleDrive(Provider):
                 if response and 'nextPageToken' in response:
                     page_token = response['nextPageToken']
                 else:
-                    all_teamdrives_fetch = True
+                    all_shareddrives_fetch = True
         except RequestException as ex:
             httpex = ExceptionUtils.extract_exception(ex, HTTPError)
             if not httpex or httpex.code != 403:
@@ -98,15 +98,15 @@ class GoogleDrive(Provider):
         return drives
     
     def get_drive_type_name(self, drive_type):
-        if drive_type == 'drive#teamDrive':
-            return 'Team Drive'
+        if drive_type == 'drive#drive' or drive_type == 'drive#teamDrive':
+            return 'Shared Drive'
         return drive_type
     
     def prepare_parameters(self):
         parameters = copy.deepcopy(self._default_parameters)
-        if self._is_team_drive:
-            parameters.update(self._team_drive_parameters)
-            parameters['teamDriveId'] = self._driveid
+        if self._is_shared_drive:
+            parameters.update(self._shared_drive_parameters)
+            parameters['driveId'] = self._driveid
         return parameters
     
     def _get_field_parameters(self):
@@ -127,7 +127,7 @@ class GoogleDrive(Provider):
             parameters['q'] = path
         elif path != 'photos':
             if path == '/':
-                parent = self._driveid if self._is_team_drive else 'root'
+                parent = self._driveid if self._is_shared_drive else 'root'
                 parameters['q'] = '\'%s\' in parents' % parent
             elif not is_album:
                 item = self.get_item_by_path(path, include_download_info)

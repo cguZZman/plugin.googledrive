@@ -45,9 +45,8 @@ class GoogleDriveAddon(CloudDriveAddon):
     def get_custom_drive_folders(self, driveid):
         drive_folders = []
         self._provider.configure(self._account_manager, driveid)
-        if self._provider._is_team_drive:
-            return
-        drive_folders.append({'name' : self._common_addon.getLocalizedString(32058), 'path' : 'sharedWithMe'})
+        if not self._provider._is_shared_drive:
+            drive_folders.append({'name' : self._common_addon.getLocalizedString(32058), 'path' : 'sharedWithMe'})
         if self._content_type == 'image':
             drive_folders.append({'name' : self._addon.getLocalizedString(32007), 'path' : 'photos'})
         drive_folders.append({'name' : self._addon.getLocalizedString(32014), 'path' : 'starred'})
