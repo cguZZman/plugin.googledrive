@@ -24,9 +24,9 @@ import copy
 from clouddrive.common.remote.provider import Provider
 from clouddrive.common.utils import Utils
 from clouddrive.common.ui.logger import Logger
-from clouddrive.common.cache.cache import Cache
 from clouddrive.common.ui.utils import KodiUtils
 from clouddrive.common.exception import RequestException, ExceptionUtils
+from clouddrive.common.cache.cache import Cache
 try:
     from urllib.error import HTTPError
 except ImportError:
@@ -50,8 +50,7 @@ class GoogleDrive(Provider):
             
     def configure(self, account_manager, driveid):
         super(GoogleDrive, self).configure(account_manager, driveid)
-        self._account_manager.load()
-        drive = account_manager.get_drive_by_driveid(driveid)
+        drive = account_manager.get_by_driveid('drive', driveid)
         self._is_team_drive = drive and 'type' in drive and drive['type'] == 'drive#teamDrive'
         
     def _get_api_url(self):

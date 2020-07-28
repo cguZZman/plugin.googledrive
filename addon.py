@@ -43,7 +43,6 @@ class GoogleDriveAddon(CloudDriveAddon):
         return self._addon.getLocalizedString(32013)
     
     def get_custom_drive_folders(self, driveid):
-        self._account_manager.load()
         drive_folders = []
         self._provider.configure(self._account_manager, driveid)
         if self._provider._is_team_drive:
