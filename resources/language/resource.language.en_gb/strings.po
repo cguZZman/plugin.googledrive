@@ -155,3 +155,7 @@ msgstr ""
 msgctxt "#32075"
 msgid "Skip unmodified files"
 msgstr ""
+
+msgctxt "#32076"
+msgid "Play choosing stream format"
+msgstr ""

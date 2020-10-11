@@ -31,6 +31,7 @@ from clouddrive.common.ui.logger import Logger
 class GoogleDriveAddon(CloudDriveAddon):
     _provider = GoogleDrive()
     _change_token = None
+    choose_stream_format = False
     
     def __init__(self):
         self._child_count_supported = False
@@ -87,7 +88,7 @@ class GoogleDriveAddon(CloudDriveAddon):
     def _get_item_play_url(self, file_name, driveid, item_driveid=None, item_id=None, is_subtitle=False):
         url = None
         if self._content_type == 'video' and not is_subtitle:
-            if KodiUtils.get_addon_setting('ask_stream_format') == 'false':
+            if KodiUtils.get_addon_setting('ask_stream_format') == 'false' and not self.choose_stream_format:
                 if KodiUtils.get_addon_setting('default_stream_quality') == 'Original':
                     url = self._get_url_original(driveid, item_driveid, item_id)
                 else:
@@ -160,12 +161,19 @@ class GoogleDriveAddon(CloudDriveAddon):
                 break
         return select
     
+    def play_stream_format(self, driveid, item_driveid=None, item_id=None):
+        self.choose_stream_format = True
+        self.play(driveid, item_driveid, item_id)
+        
     def get_context_options(self, list_item, params, is_folder):
         context_options = []
         if Utils.get_safe_value(params, 'action', '') == 'play':
             p = params.copy()
             p['action'] = 'check_google_ban'
             context_options.append((self._addon.getLocalizedString(32071), 'RunPlugin('+self._addon_url + '?' + urllib.urlencode(p)+')'))
+            p['action'] = 'play_stream_format'
+            cmd = 'PlayMedia(%s?%s)' % (self._addon_url, urllib.urlencode(p),)
+            context_options.append((self._addon.getLocalizedString(32076), cmd))
         return context_options
     
     def check_google_ban(self, driveid, item_driveid=None, item_id=None):
