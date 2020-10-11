@@ -142,23 +142,29 @@ class GoogleDrive(Provider):
         provider_method = self.get
         url = '/files'
         parameters['pageSize'] = 1000
+        items = []
         if path == 'photos':
             self._photos_provider = GooglePhotos()
             self._photos_provider.configure(self._account_manager, self._driveid)
             parameters = {}
             provider_method = self._photos_provider.get
             url = '/albums'
+            items.append(self._extract_item({'id': 'photos', 'title': 'Photos', 'kind': 'album'}))
         elif is_album:
             self._photos_provider = GooglePhotos()
             self._photos_provider.configure(self._account_manager, self._driveid)
-            parameters = {'albumId': item_id}
+            if item_id == 'photos':
+                parameters = {}
+            else:
+                parameters = {'albumId': item_id}
             provider_method = self._photos_provider.post
             url = '/mediaItems:search'
             
         files = provider_method(url, parameters = parameters)
         if self.cancel_operation():
             return
-        return self.process_files(files, parameters, on_items_page_completed, include_download_info)
+        items.extend(self.process_files(files, parameters, on_items_page_completed, include_download_info))
+        return items
     
     def search(self, query, item_driveid=None, item_id=None, on_items_page_completed=None):
         item_driveid = Utils.default(item_driveid, self._driveid)
