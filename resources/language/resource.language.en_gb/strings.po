@@ -29,7 +29,7 @@ msgid "Source Service"
 msgstr ""
 
 msgctxt "#32003"
-msgid "Before export to library, remove previous files and folders"
+msgid "Before full export, remove previous local files and folders"
 msgstr ""
 
 msgctxt "#32004"
@@ -145,7 +145,7 @@ msgid "Response code: %s"
 msgstr ""
 
 msgctxt "#32074"
-msgid "Export .nfo files"
+msgid "Download metadata files (.nfo, .strm)"
 msgstr ""
 
 msgctxt "#32075"

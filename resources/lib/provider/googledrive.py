@@ -46,6 +46,7 @@ class GoogleDrive(Provider):
 
     def __init__(self, source_mode = False):
         super(GoogleDrive, self).__init__('googledrive', source_mode)
+        self.download_requires_auth = True
         self._items_cache = Cache(KodiUtils.get_addon_info('id'), 'items', datetime.timedelta(minutes=KodiUtils.get_cache_expiration_time()))
             
     def configure(self, account_manager, driveid):
@@ -112,7 +113,7 @@ class GoogleDrive(Provider):
     def _get_field_parameters(self):
         file_fileds = 'id,name,modifiedTime,size,mimeType'
         if not self.source_mode:
-            file_fileds = file_fileds + ',description,hasThumbnail,thumbnailLink,owners(permissionId),parents,trashed,imageMediaMetadata(width),videoMediaMetadata'
+            file_fileds = file_fileds + ',description,hasThumbnail,thumbnailLink,owners(permissionId),parents,trashed,imageMediaMetadata(width),videoMediaMetadata,shortcutDetails'
         return file_fileds
         
     def get_folder_items(self, item_driveid=None, item_id=None, path=None, on_items_page_completed=None, include_download_info=False):
@@ -220,8 +221,14 @@ class GoogleDrive(Provider):
     def _extract_item(self, f, include_download_info=False):
         kind = Utils.get_safe_value(f, 'kind', '')
         if kind == 'drive#change':
-            if 'file' in f:
-                f = f['file']
+            change_type = Utils.get_safe_value(f, 'changeType', '')
+            if change_type == 'file':
+                if 'file' in f:
+                    f = f['file']
+                else:
+                    f['id'] = Utils.get_safe_value(f, 'fileId')
+                    f['trashed'] = Utils.get_safe_value(f, 'removed')
+                    f['modifiedTime'] = Utils.get_safe_value(f, 'time')
             else:
                 return {}
         size = long('%s' % Utils.get_safe_value(f, 'size', 0))
@@ -234,6 +241,10 @@ class GoogleDrive(Provider):
         else:
             mimetype = Utils.get_safe_value(f, 'mimeType', '')
             name = Utils.get_safe_value(f, 'name', '')
+        if mimetype == 'application/vnd.google-apps.shortcut':
+            shortcut = Utils.get_safe_value(f, 'shortcutDetails') 
+            item_id = Utils.get_safe_value(shortcut, 'targetId', item_id)
+            mimetype = Utils.get_safe_value(shortcut, 'targetMimeType', mimetype)
         if is_media_items:
             name = Utils.get_safe_value(f, 'filename', item_id) 
         item = {
@@ -374,7 +385,7 @@ class GoogleDrive(Provider):
         parameters = self.prepare_parameters()
         parameters['pageToken'] = change_token
         parameters['pageSize'] = 1000
-        parameters['fields'] = 'kind,nextPageToken,newStartPageToken,changes(kind,type,removed,file(%s))' % self._get_field_parameters()
+        parameters['fields'] = 'kind,nextPageToken,newStartPageToken,changes(kind,fileId,removed,changeType,time,file(%s))' % self._get_field_parameters()
         f = self.get('/changes', parameters = parameters)
         changes = self.process_files(f, parameters, include_download_info=True, extra_info=extra_info)
         self.persist_change_token(Utils.get_safe_value(extra_info, 'change_token'))
