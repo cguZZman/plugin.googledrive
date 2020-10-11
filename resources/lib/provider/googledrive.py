@@ -39,9 +39,9 @@ except NameError:
 
 
 class GoogleDrive(Provider):
-    _default_parameters = {'spaces': 'drive', 'prettyPrint': 'false'}
+    _default_parameters = {'spaces': 'drive', 'supportsAllDrives': 'true', 'prettyPrint': 'false'}
     _is_shared_drive = False
-    _shared_drive_parameters = {'includeItemsFromAllDrives': 'true', 'supportsAllDrives': 'true', 'corpora': 'drive', 'driveId': ''}
+    _shared_drive_parameters = {'includeItemsFromAllDrives': 'true', 'corpora': 'drive', 'driveId': ''}
     _user = None
 
     def __init__(self, source_mode = False):
