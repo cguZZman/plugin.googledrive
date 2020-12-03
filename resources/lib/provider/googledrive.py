@@ -32,12 +32,6 @@ try:
 except ImportError:
     from urllib2 import HTTPError
 
-try:
-    long
-except NameError:
-    long = int
-
-
 class GoogleDrive(Provider):
     _default_parameters = {'spaces': 'drive', 'supportsAllDrives': 'true', 'prettyPrint': 'false'}
     _is_shared_drive = False
@@ -239,7 +233,7 @@ class GoogleDrive(Provider):
                     f['modifiedTime'] = Utils.get_safe_value(f, 'time')
             else:
                 return {}
-        size = long('%s' % Utils.get_safe_value(f, 'size', 0))
+        size = int('%s' % Utils.get_safe_value(f, 'size', 0))
         is_album = kind == 'album'
         is_media_items = kind == 'media_item'
         item_id = f['id']
@@ -289,7 +283,7 @@ class GoogleDrive(Provider):
             item['video'] = {
                 'width' : Utils.get_safe_value(video, 'width'),
                 'height' : Utils.get_safe_value(video, 'height'),
-                'duration' : long('%s' % Utils.get_safe_value(video, 'durationMillis', 0)) / 1000
+                'duration' : int('%s' % Utils.get_safe_value(video, 'durationMillis', 0)) / 1000
             }
         if 'imageMediaMetadata' in f or 'mediaMetadata' in f:
             item['image'] = {
@@ -313,7 +307,7 @@ class GoogleDrive(Provider):
                 if 'size' not in f and item['mimetype'] == 'application/vnd.google-apps.document':
                     url += '/export'
                     parameters['mimeType'] = Utils.default(Utils.get_mimetype_by_extension(item['name_extension']), Utils.get_mimetype_by_extension('pdf'))
-                url += '?%s' % urllib.urlencode(parameters)
+                url += '?%s' % urllib.parse.urlencode(parameters)
                 item['download_info'] =  {
                     'url' : url
                 }
@@ -330,7 +324,7 @@ class GoogleDrive(Provider):
         if not item:
             parameters['fields'] = 'files(%s)' % self._get_field_parameters()
             index = path.rfind('/')
-            filename = urllib.unquote(path[index+1:])
+            filename = urllib.parse.unquote(path[index+1:])
             parent = path[0:index]
             if not parent:
                 parent = 'root'

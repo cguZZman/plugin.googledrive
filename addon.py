@@ -18,7 +18,6 @@
 #-------------------------------------------------------------------------------
 
 import urllib
-import urlparse
 
 from clouddrive.common.remote.request import Request
 from clouddrive.common.ui.addon import CloudDriveAddon
@@ -82,7 +81,7 @@ class GoogleDriveAddon(CloudDriveAddon):
         self._provider.configure(self._account_manager, driveid)
         item = self._provider.get_item(item_driveid=item_driveid, item_id=item_id, include_download_info = True)
         url = item['download_info']['url']
-        url += "|Authorization=%s" % urllib.quote("Bearer %s" % self._provider.get_access_tokens()['access_token'])
+        url += "|Authorization=%s" % urllib.parse.quote("Bearer %s" % self._provider.get_access_tokens()['access_token'])
         return url
     
     def _get_item_play_url(self, file_name, driveid, item_driveid=None, item_id=None, is_subtitle=False):
@@ -105,9 +104,9 @@ class GoogleDriveAddon(CloudDriveAddon):
             self._progress_dialog.update(0, self._addon.getLocalizedString(32009))
         self._provider.configure(self._account_manager, driveid)
         self._provider.get_item(item_driveid, item_id)
-        request = Request('https://drive.google.com/get_video_info', urllib.urlencode({'docid' : item_id}), {'authorization': 'Bearer %s' % self._provider.get_access_tokens()['access_token']})
+        request = Request('https://drive.google.com/get_video_info', urllib.parse.urlencode({'docid' : item_id}), {'authorization': 'Bearer %s' % self._provider.get_access_tokens()['access_token']})
         response_text = request.request()
-        response_params = dict(urlparse.parse_qsl(response_text))
+        response_params = dict(urllib.parse.parse_qsl(response_text))
         if not auto:
             self._progress_dialog.close()
         if Utils.get_safe_value(response_params, 'status', '') == 'ok':
@@ -140,7 +139,7 @@ class GoogleDriveAddon(CloudDriveAddon):
                     for cookie in request.response_cookies:
                         if cookie_header: cookie_header += ';'
                         cookie_header += cookie.name + '=' + cookie.value;
-                    url += '|cookie=' + urllib.quote(cookie_header)
+                    url += '|cookie=' + urllib.parse.quote(cookie_header)
         return url
 
     def _auto_select_stream(self, streams):
@@ -170,9 +169,9 @@ class GoogleDriveAddon(CloudDriveAddon):
         if Utils.get_safe_value(params, 'action', '') == 'play':
             p = params.copy()
             p['action'] = 'check_google_ban'
-            context_options.append((self._addon.getLocalizedString(32071), 'RunPlugin('+self._addon_url + '?' + urllib.urlencode(p)+')'))
+            context_options.append((self._addon.getLocalizedString(32071), 'RunPlugin('+self._addon_url + '?' + urllib.parse.urlencode(p)+')'))
             p['action'] = 'play_stream_format'
-            cmd = 'PlayMedia(%s?%s)' % (self._addon_url, urllib.urlencode(p),)
+            cmd = 'PlayMedia(%s?%s)' % (self._addon_url, urllib.parse.urlencode(p),)
             context_options.append((self._addon.getLocalizedString(32076), cmd))
         return context_options
     
@@ -194,10 +193,9 @@ class GoogleDriveAddon(CloudDriveAddon):
         if request.response_code == 403 or request.response_code == 429:
             color = 'red'
             ban = self._common_addon.getLocalizedString(32033)
-        self._dialog.ok(self._addon_name, 
-                        self._addon.getLocalizedString(32072) % '[B][COLOR %s]%s[/COLOR][/B]' % (color, ban,),
-                        self._addon.getLocalizedString(32073) % '[B]%s[/B]' % Utils.str(request.response_code),
-                        request.response_text
-        )
+        msg = self._addon.getLocalizedString(32072) % '[B][COLOR %s]%s[/COLOR][/B]' % (color, ban,)
+        msg += '\n' + self._addon.getLocalizedString(32073) % '[B]%s[/B]' % Utils.str(request.response_code)
+        msg += '\n' + request.response_text
+        self._dialog.ok(self._addon_name, msg)
 if __name__ == '__main__':
     GoogleDriveAddon().route()
