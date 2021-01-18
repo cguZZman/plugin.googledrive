@@ -19,7 +19,7 @@ Play all your media from Google Drive including Videos, Music and Pictures (incl
  - Search over your drive.
  - Auto-Refreshed slideshow.
  - Export your videos to your library (.strm files)
- - Use Google Drive as a source
+ - Use Google Drive as a source. **(Not currently working due to changes in the Google Drive API)
  - This program is not affiliated with or sponsored by Google.
 		</description>
 		<summary lang="he_IL">כונן Google Drive של מיקרוסופט עבור קודי</summary>
