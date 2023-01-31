@@ -42,6 +42,7 @@ class GoogleDrive(Provider):
         super(GoogleDrive, self).__init__('googledrive', source_mode)
         self.download_requires_auth = True
         self._items_cache = Cache(KodiUtils.get_addon_info('id'), 'items', datetime.timedelta(minutes=KodiUtils.get_cache_expiration_time()))
+        self._instance_cache = {}
             
     def configure(self, account_manager, driveid):
         super(GoogleDrive, self).configure(account_manager, driveid)
@@ -154,10 +155,49 @@ class GoogleDrive(Provider):
             provider_method = self._photos_provider.post
             url = '/mediaItems:search'
             
-        files = provider_method(url, parameters = parameters)
+        if url == '/files':
+            if not item_id in self._instance_cache:
+                self._instance_cache[item_id] = {'kind': 'drive#fileList', 'files': []}
+                ids_per_batch = 120
+                id_batch = [item_id]
+                while id_batch:
+                    query = ['trashed=false', 'and']
+                    batch = id_batch[:ids_per_batch]
+                    for idx, _id in enumerate(batch, start=1):
+                        q = '\'%s\' in parents' % _id
+                        if idx == 1:
+                            q = '(' + q
+                        if idx == len(batch):
+                            q = q + ')'
+                        query.append(q)
+                        if idx != len(batch):
+                            query.append('or')
+                    parameters['q'] = ' '.join(query)
+                    id_batch = id_batch[ids_per_batch:]
+                    files = provider_method(url, parameters = parameters)
+                    for file in Utils.get_safe_value(files, 'files', []):
+                        file_mimeType = Utils.get_safe_value(
+                            Utils.get_safe_value(file, 'shortcutDetails'),
+                            'targetMimeType',
+                            Utils.get_safe_value(file, 'mimeType')
+                        )
+                        file_id = Utils.get_safe_value(
+                            Utils.get_safe_value(file, 'shortcutDetails'),
+                            'targetId',
+                            Utils.get_safe_value(file, 'id')
+                        )
+                        parent_id = Utils.get_safe_value(file, 'parents', [None])[0]
+                        if file_mimeType == 'application/vnd.google-apps.folder':
+                            id_batch.append(file_id)
+                            self._instance_cache[file_id] = {'kind': 'drive#fileList', 'files': []}
+                        if parent_id in self._instance_cache:
+                            self._instance_cache[parent_id]['files'].append(file)
+        else:
+            self._instance_cache[item_id] = provider_method(url, parameters = parameters)
+        
         if self.cancel_operation():
             return
-        items.extend(self.process_files(files, parameters, on_items_page_completed, include_download_info, on_before_add_item=on_before_add_item))
+        items.extend(self.process_files(self._instance_cache[item_id], parameters, on_items_page_completed, include_download_info, on_before_add_item=on_before_add_item))
         return items
     
     def search(self, query, item_driveid=None, item_id=None, on_items_page_completed=None):
