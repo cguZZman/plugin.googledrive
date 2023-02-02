@@ -42,7 +42,8 @@ class GoogleDrive(Provider):
         super(GoogleDrive, self).__init__('googledrive', source_mode)
         self.download_requires_auth = True
         self._items_cache = Cache(KodiUtils.get_addon_info('id'), 'items', datetime.timedelta(minutes=KodiUtils.get_cache_expiration_time()))
-            
+        self._instance_cache = {}
+        
     def configure(self, account_manager, driveid):
         super(GoogleDrive, self).configure(account_manager, driveid)
         drive = account_manager.get_by_driveid('drive', driveid)
@@ -153,7 +154,44 @@ class GoogleDrive(Provider):
                 parameters = {'albumId': item_id}
             provider_method = self._photos_provider.post
             url = '/mediaItems:search'
-            
+
+        if url == '/files' and item_id and include_download_info:
+            if not item_id in self._instance_cache:
+                self._instance_cache[item_id] = []
+                ids_per_batch = 120
+                id_batch = [item_id]
+                original_params = {k:v for k,v in parameters.items()}
+                while id_batch:
+                    query = ['trashed=false', 'and']
+                    batch = id_batch[:ids_per_batch]
+                    for idx, _id in enumerate(batch, start=1):
+                        q = '\'%s\' in parents' % _id
+                        if idx == 1:
+                            q = '(' + q
+                        if idx == len(batch):
+                            q = q + ')'
+                        query.append(q)
+                        if idx != len(batch):
+                            query.append('or')
+                    parameters['q'] = ' '.join(query)
+                    id_batch = id_batch[ids_per_batch:]
+                    response = provider_method(url, parameters = parameters)
+                    files = self.process_files(response, parameters, on_items_page_completed, include_download_info, on_before_add_item=on_before_add_item)
+                    if self.cancel_operation():
+                        return
+                    parameters = original_params.copy()
+                    for file in files:
+                        file_mimeType = file['mimetype']
+                        file_id = file['id']
+                        parent_id = file['parent']
+                        if file_mimeType == 'application/vnd.google-apps.folder':
+                            id_batch.append(file_id)
+                            self._instance_cache[file_id] = []
+                        if parent_id in self._instance_cache:
+                            self._instance_cache[parent_id].append(file)
+            items.extend(self._instance_cache[item_id])
+            return items
+        
         files = provider_method(url, parameters = parameters)
         if self.cancel_operation():
             return
