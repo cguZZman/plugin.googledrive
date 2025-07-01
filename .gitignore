@@ -3,3 +3,45 @@
 /env/
 *.pyc
 *.pyo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.coverage.*
+
+# Claude
+.claude/*
+
+# Virtual environments
+venv/
+.venv/
+ENV/
+.env/
+env.bak/
+venv.bak/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+__pycache__/
+
+# IDE files
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+
+# OS files
+.DS_Store
+Thumbs.db
+.Spotlight-V100
+.Trashes
