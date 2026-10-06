@@ -1,0 +1,166 @@
+# Kodi Media Center Swedish language file
+# Addon Name: Google Drive
+# Addon id: plugin.googledrive
+# Addon Provider: Carlos Guzman (cguZZman)
+msgid ""
+msgstr ""
+"Project-Id-Version: Kodi Addons\n"
+"Report-Msgid-Bugs-To: alanwww1@xbmc.org\n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2025-04-12 11:10+0200\n"
+"Last-Translator: Daniel Nylander <github@danielnylander.se>\n"
+"Language-Team: Swedish\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.6\n"
+
+msgctxt "#32000"
+msgid "Player Service"
+msgstr "Uppspelningstjänst"
+
+msgctxt "#32001"
+msgid "Export Service"
+msgstr "Exporttjänst"
+
+msgctxt "#32002"
+msgid "Source Service"
+msgstr "Källtjänst"
+
+msgctxt "#32003"
+msgid "Before full export, remove previous local files and folders"
+msgstr "Innan fullständig export, ta bort tidigare lokala filer och mappar"
+
+msgctxt "#32004"
+msgid "Automatically set subtitles from cloud drive"
+msgstr "Ställ automatiskt in undertexter från molndisk"
+
+msgctxt "#32005"
+msgid "Auto-Refreshed slideshow"
+msgstr "Auto-uppdaterat bildspel"
+
+msgctxt "#32006"
+msgid "Refresh interval in minutes"
+msgstr "Uppdateringsintervall i minuter"
+
+msgctxt "#32007"
+msgid "Google Photos"
+msgstr "Google Foto"
+
+msgctxt "#32008"
+msgid "Always ask for the stream format before play"
+msgstr "Fråga alltid efter strömningsformatet innan du spelar"
+
+msgctxt "#32009"
+msgid "Loading stream formats..."
+msgstr "Läser in strömningsformat..."
+
+msgctxt "#32010"
+msgid "Recursive auto-refreshed slideshow"
+msgstr "Rekursivt bildspel med automatisk uppdatering"
+
+msgctxt "#32011"
+msgid "Resume playing when resume point exists in library"
+msgstr "Återuppta uppspelningen när det finns en återupptagningspunkt i biblioteket"
+
+msgctxt "#32012"
+msgid "Open Cloud Drive Common Settings..."
+msgstr "Öppna vanliga inställningar för Cloud Drive..."
+
+msgctxt "#32013"
+msgid "My Drive"
+msgstr "Min enhet"
+
+msgctxt "#32014"
+msgid "Starred"
+msgstr "Stjärnmärkt"
+
+msgctxt "#32015"
+msgid "Original format"
+msgstr "Originalformat"
+
+msgctxt "#32016"
+msgid "Select the stream format"
+msgstr "Välj strömningsformat"
+
+msgctxt "#32017"
+msgid "Ask to resume if resume point exists in library"
+msgstr "Fråga att återuppta om återupptagningspunkt finns i biblioteket"
+
+msgctxt "#32018"
+msgid "Save resume points and watched status in library"
+msgstr "Spara återupptagningspunkt och sedd-status i biblioteket"
+
+msgctxt "#32019"
+msgid "Do not include filename extension in a .strm"
+msgstr "Inkludera inte filnamnstillägg i en .strm"
+
+msgctxt "#32020"
+msgid "Hide exporting progress dialog"
+msgstr "Dölj dialogrutan för exportförlopp"
+
+msgctxt "#32030"
+msgid "Collaboration"
+msgstr "Samarbete"
+
+msgctxt "#32031"
+msgid "Report errors automatically to help resolve them quickly"
+msgstr "Rapportera fel automatiskt för att hjälpa till att lösa dem snabbt"
+
+msgctxt "#32032"
+msgid "Advanced"
+msgstr "Avancerat"
+
+msgctxt "#32033"
+msgid "Sign-in Server"
+msgstr "Server för inloggning"
+
+msgctxt "#32034"
+msgid "Cache expiration time (in minutes)"
+msgstr "Utgångstid för cachen (i minuter)"
+
+msgctxt "#32035"
+msgid "Clear cache now"
+msgstr "Töm cache nu"
+
+msgctxt "#32067"
+msgid "Services"
+msgstr "Tjänster"
+
+msgctxt "#32068"
+msgid "Allow using Google Drive as a source"
+msgstr "Tillåt användning av Google Drive som en källa"
+
+msgctxt "#32069"
+msgid "     Source server port  -  http://localhost:<port>/source"
+msgstr "     Port för källserver - http://localhost:<port>/källa"
+
+msgctxt "#32070"
+msgid "Default stream quality"
+msgstr "Standardkvalitet för strömning"
+
+msgctxt "#32071"
+msgid "Check for Google ban"
+msgstr "Leta efter Google-bannlysning"
+
+msgctxt "#32072"
+msgid "Banned: %s"
+msgstr "Bannlyst: %s"
+
+msgctxt "#32073"
+msgid "Response code: %s"
+msgstr "Resultatkod: %s"
+
+msgctxt "#32074"
+msgid "Download metadata files (.nfo, .strm)"
+msgstr "Hämta ner metadatafiler (.nfo, .strm)"
+
+msgctxt "#32075"
+msgid "Skip unmodified files"
+msgstr "Hoppa över omodifierade filer"
+
+msgctxt "#32076"
+msgid "Play choosing stream format"
+msgstr "Spela upp genom att välja strömningsformat"

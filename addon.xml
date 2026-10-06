@@ -11,6 +11,7 @@
 	<extension point="xbmc.addon.metadata">
 		<platform>all</platform>
 		<summary lang="en_GB">Google Drive for KODI</summary>
+		<summary lang="sv_SE">Google Drive för KODI</summary>
 		<description lang="en_GB">
 Play all your media from Google Drive including Videos, Music and Pictures.
  - Unlimited number of accounts.
@@ -29,6 +30,17 @@ Play all your media from Google Drive including Videos, Music and Pictures.
   - ריענון מצגת אוטומטית.
   - ייצוא קטעי הווידאו לספרייה שלך (קבצי .strm)
   - תוכנית זו אינה קשורה או ממומנת על ידי Google.
+		</description>
+		<description lang="sv_SE">
+Spela upp alla dina medier från Google Drive, inklusive videor, musik och bilder (inklusive Google Foton).
+- Obegränsat antal konton.
+- Stöd för Team Drives
+- Stöd för Google Foto
+- Sök i din enhet.
+- Automatiskt uppdaterat bildspel.
+- Exportera dina videor till ditt bibliotek (.strm-filer)
+- Använd Google Drive som källa. **(Fungerar för närvarande inte på grund av ändringar i Google Drive API)
+- Detta program är inte anslutet till eller sponsrat av Google.
 		</description>
 		<license>GPL-3.0-or-later</license>
 		<source>https://github.com/cguZZman/plugin.googledrive</source>
