@@ -1,4 +1,4 @@
-# Google Drive KODI Addon
+# Google Drive VLC Addon
 
 Play all your media from Google Drive including Videos, Music and Pictures (including Google Photos). 
 * Unlimited accounts
