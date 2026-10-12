@@ -52,10 +52,6 @@ msgctxt "#32010"
 msgid "Recursive auto-refreshed slideshow"
 msgstr "Auto-Actualizar recursivamente las diapositivas"
 
-msgctxt "#32011"
-msgid "Common Settings"
-msgstr "Ajustes"
-
 msgctxt "#32012"
 msgid "Open Cloud Drive Common Settings..."
 msgstr "Configuración de Drive..."

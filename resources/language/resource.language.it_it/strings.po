@@ -52,10 +52,6 @@ msgctxt "#32010"
 msgid "Recursive auto-refreshed slideshow"
 msgstr "Auto aggiornamento ricursivo slideshow"
 
-msgctxt "#32011"
-msgid "Common Settings"
-msgstr "Impostazioni comuni"
-
 msgctxt "#32012"
 msgid "Open Cloud Drive Common Settings..."
 msgstr "Impostazioni comuni di Open Cloud..."
