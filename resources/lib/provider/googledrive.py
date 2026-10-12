@@ -106,6 +106,11 @@ class GoogleDrive(Provider):
             parameters['driveId'] = self._driveid
         return parameters
     
+    @staticmethod
+    def _quote(value):
+        # A value inside single quotes in a Drive query: backslashes and quotes are escaped.
+        return Utils.str(value).replace('\\', '\\\\').replace("'", "\\'")
+
     def _get_field_parameters(self):
         file_fileds = 'id,name,modifiedTime,size,mimeType'
         if not self.source_mode:
@@ -143,7 +148,7 @@ class GoogleDrive(Provider):
         item_driveid = Utils.default(item_driveid, self._driveid)
         parameters = self.prepare_parameters()
         parameters['fields'] = 'files(%s),kind,nextPageToken' % self._get_field_parameters()
-        query = 'fullText contains \'%s\'' % Utils.str(query)
+        query = 'fullText contains \'%s\'' % self._quote(query)
         if item_id:
             query += ' and \'%s\' in parents' % item_id
         parameters['q'] = query + ' and not trashed'
@@ -268,7 +273,7 @@ class GoogleDrive(Provider):
             else:
                 parent = self.get_item_by_path(parent, include_download_info)['id']
             item = None
-            parameters['q'] = '\'%s\' in parents and name = \'%s\'' % (Utils.str(parent), Utils.str(filename).replace("'","\\'"))
+            parameters['q'] = '\'%s\' in parents and name = \'%s\'' % (self._quote(parent), self._quote(filename))
             parameters['pageSize'] = 1000
             files = self.get('/files', parameters = parameters)
             if (len(files['files']) > 0):
@@ -289,7 +294,10 @@ class GoogleDrive(Provider):
         item_driveid = Utils.default(item_driveid, self._driveid)
         subtitles = []
         parameters['fields'] = 'files(' + self._get_field_parameters() + ')'
-        parameters['q'] = 'name contains \'%s\'' % Utils.str(Utils.remove_extension(name)).replace("'","\\'")
+        # Subtitles stored next to the video, named after it.
+        parameters['q'] = 'name contains \'%s\'' % self._quote(Utils.remove_extension(name))
+        if parent:
+            parameters['q'] += ' and \'%s\' in parents' % self._quote(parent)
         parameters['pageSize'] = 1000
         files = self.get('/files', parameters = parameters)
         for f in files['files']:
