@@ -29,6 +29,7 @@ from clouddrive.common.ui.logger import Logger
 
 class GoogleDriveAddon(CloudDriveAddon):
     _provider = GoogleDrive()
+    _plugin_actions = ('check_google_ban', 'play_stream_format')
     _change_token = None
     choose_stream_format = False
     
