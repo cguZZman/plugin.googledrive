@@ -1,0 +1,14 @@
+# Line endings: LF in the repository and in the files Kodi installs.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
+*.ttf binary
+# Not part of the add-on: left out of "git archive", which builds the add-on zips and the Kodi repository submissions.
+/tests export-ignore
+/.github export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/.project export-ignore
+/.pydevproject export-ignore
+/.settings export-ignore

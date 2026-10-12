@@ -1,0 +1,40 @@
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  tests:
+    # Python 3.8: Kodi 19 and 20; 3.12: newer Kodi versions.
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        python: ['3.8', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: cguZZman/script.module.clouddrive.common
+          ref: matrix
+          path: common
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install python-dateutil
+      - run: python -m unittest discover -s tests -t tests -v
+        env:
+          CLOUDDRIVE_COMMON: ${{ github.workspace }}/common
+
+  addon-checker:
+    runs-on: ubuntu-22.04
+    # Reports the dependency on script.module.clouddrive.common until Kodi's repository has the required version.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install kodi-addon-checker==0.0.36
+      - run: |
+          mkdir -p ../out/plugin.googledrive
+          git archive HEAD | tar -x -C ../out/plugin.googledrive
+          cd ../out && kodi-addon-checker --branch matrix plugin.googledrive
