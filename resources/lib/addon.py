@@ -54,15 +54,16 @@ class GoogleDriveAddon(CloudDriveAddon):
     def new_change_token_slideshow(self, change_token, driveid, item_driveid=None, item_id=None, path=None):
         self._provider.configure(self._account_manager, driveid)
         if not change_token:
-            response = self._provider.get('/changes/startPageToken', parameters = self._provider._parameters)
+            response = self._provider.get('/changes/startPageToken', parameters = self._provider.prepare_parameters())
             self._change_token = Utils.get_safe_value(response, 'startPageToken')
             change_token = 1
         else:
             page_token = self._change_token
             while page_token:
-                self._provider._parameters['pageToken'] = page_token
-                self._provider._parameters['fields'] = 'nextPageToken,newStartPageToken,changes(file(id,name,parents))'
-                response = self._provider.get('/changes', parameters = self._provider._parameters)
+                parameters = self._provider.prepare_parameters()
+                parameters['pageToken'] = page_token
+                parameters['fields'] = 'nextPageToken,newStartPageToken,changes(file(id,name,parents))'
+                response = self._provider.get('/changes', parameters = parameters)
                 if self.cancel_operation():
                     return
                 self._change_token = Utils.get_safe_value(response, 'newStartPageToken', self._change_token)
