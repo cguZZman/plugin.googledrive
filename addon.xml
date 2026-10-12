@@ -33,7 +33,6 @@ Play all your media from Google Drive including Videos, Music and Pictures.
 		<license>GPL-3.0-or-later</license>
 		<source>https://github.com/cguZZman/plugin.googledrive</source>
 		<forum>https://github.com/cguZZman/plugin.googledrive/issues</forum>
-		<website>https://addons.kodi.tv/show/plugin.googledrive</website>
 		<assets>
 			<icon>icon.png</icon>
 			<fanart>fanart.jpg</fanart>
