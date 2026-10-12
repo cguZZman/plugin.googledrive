@@ -48,14 +48,6 @@ msgctxt "#32007"
 msgid "Google Photos"
 msgstr "Google Photos"
 
-msgctxt "#32008"
-msgid "-unused-Special: Camera Roll"
-msgstr "-unused-Special: Rullino fotografico"
-
-msgctxt "#32009"
-msgid "-unused-Special: Music"
-msgstr "-unused-Special: Musica"
-
 msgctxt "#32010"
 msgid "Recursive auto-refreshed slideshow"
 msgstr "Auto aggiornamento ricursivo slideshow"
