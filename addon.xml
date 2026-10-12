@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="plugin.googledrive" name="Google Drive" version="1.6.2" provider-name="Carlos Guzman (cguZZman)">
+<addon id="plugin.googledrive" name="Google Drive" version="1.6.3" provider-name="Carlos Guzman (cguZZman)">
 	<requires>
 		<import addon="xbmc.python" version="3.0.0" />
-		<import addon="script.module.clouddrive.common" version="1.5.2"/>
+		<import addon="script.module.clouddrive.common" version="1.5.4"/>
 	</requires>
 	<extension point="xbmc.python.pluginsource" library="entrypoint.py">
 		<provides>image audio video</provides>
@@ -37,7 +37,13 @@ Play all your media from Google Drive including Videos, Music and Pictures.
 			<icon>icon.png</icon>
 			<fanart>fanart.jpg</fanart>
 		</assets>
-		<news>
+		<news>v1.6.3 released Oct 12, 2026:
+- Stream format selection removed: it relied on an undocumented Google service that no longer works
+- "Check for Google ban" is now "Check download quota"
+- Search works with quotes in the text, and subtitles are taken only from the video's folder
+- Auto-refreshed slideshow fixed
+- Requires clouddrive.common 1.5.4
+
 v1.6.2 released Oct 11, 2026:
 - New sign-in server address: https://drive.signinserver.com (the old one keeps working for older versions)
 - Sign-in works when Kodi or the phone uses IPv6 (requires clouddrive.common 1.5.2)
@@ -53,8 +59,7 @@ v1.6.0 released Oct 4, 2026:
 - Videos at original quality, music and pictures play through the add-on's local service, so long videos keep playing after the access token expires
 
 v1.5.0 released Jan 21, 2023:
-- Kodi 20 fix
-		</news>
+- Kodi 20 fix</news>
 		<disclaimer lang="en_GB">
 This cloud drive addon uses a third-party authentication mechanism commonly known as OAuth 2.0.
 If you want to know more about OAuth 2.0 you can visit the following pages:
