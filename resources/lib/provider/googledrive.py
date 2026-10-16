@@ -297,14 +297,15 @@ class GoogleDrive(Provider):
         if not item:
             parameters['fields'] = 'files(%s)' % self._get_field_parameters()
             index = path.rfind('/')
+            # Decoded paths come from clouddrive.common 1.5.7 on, encoded ones before: decoding again works for both.
             filename = urllib.parse.unquote(path[index+1:])
             parent = path[0:index]
             if not parent:
-                parent = 'root'
+                parent = self._driveid if self._is_shared_drive else 'root'
             else:
                 parent = self.get_item_by_path(parent, include_download_info)['id']
             item = None
-            parameters['q'] = '\'%s\' in parents and name = \'%s\'' % (self._quote(parent), self._quote(filename))
+            parameters['q'] = '\'%s\' in parents and name = \'%s\' and not trashed' % (self._quote(parent), self._quote(filename))
             parameters['pageSize'] = 1000
             files = self.get('/files', parameters = parameters)
             if (len(files['files']) > 0):

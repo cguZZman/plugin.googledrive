@@ -1,4 +1,5 @@
 import unittest
+import unittest.mock
 
 import stubs  # noqa: F401
 import kodistubs
@@ -141,3 +142,23 @@ class SubtreeListingTest(unittest.TestCase):
         d = TreeDrive(self.TREE)
         self.assertEqual(sorted(i['id'] for i in d.get_folder_items(item_id='root', include_download_info=True)), ['A', 'B', 'r'])
         self.assertEqual([c[1]['q'] for c in d.calls], ["'root' in parents and not trashed"])
+
+
+class PathLookupTest(unittest.TestCase):
+    def test_paths_are_resolved_name_by_name_without_trashed_files(self):
+        d = FakeGoogleDrive([
+            {'files': [drive_file('m', 'Movies', 'application/vnd.google-apps.folder', parents=['root'])]},
+            {'files': [drive_file('f', "It's.mkv", parents=['m'])]}])
+        d._items_cache = unittest.mock.MagicMock(get=lambda key: None)
+        self.assertEqual(d.get_item_by_path("/Movies/It's.mkv")['id'], 'f')
+        self.assertEqual([c[1]['q'] for c in d.calls], [
+            "'root' in parents and name = 'Movies' and not trashed",
+            "'m' in parents and name = 'It\\'s.mkv' and not trashed"])
+
+    def test_shared_drive_paths_start_at_the_drive(self):
+        d = FakeGoogleDrive([{'files': [drive_file('m', 'Movies', 'application/vnd.google-apps.folder')]}])
+        d._items_cache = unittest.mock.MagicMock(get=lambda key: None)
+        d._is_shared_drive, d._driveid = True, 'shared1'
+        d.prepare_parameters = lambda: {}
+        d.get_item_by_path('/Movies')
+        self.assertEqual(d.calls[0][1]['q'], "'shared1' in parents and name = 'Movies' and not trashed")

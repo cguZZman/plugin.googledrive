@@ -18,7 +18,7 @@ Play all your media from Google Drive including Videos, Music and Pictures.
  - Search over your drive.
  - Auto-Refreshed slideshow.
  - Export your videos to your library (.strm files)
- - Use Google Drive as a source. **(Not currently working due to changes in the Google Drive API)
+ - Use Google Drive as a source in Kodi's file manager.
  - This program is not affiliated with or sponsored by Google.
 		</description>
 		<summary lang="he_IL">כונן Google Drive של מיקרוסופט עבור קודי</summary>
@@ -38,7 +38,7 @@ Spela upp alla dina medier från Google Drive, inklusive videor, musik och bilde
  - Sök i din Drive.
  - Automatiskt uppdaterat bildspel.
  - Exportera dina videor till biblioteket (.strm-filer)
- - Använd Google Drive som källa. **(Fungerar inte för närvarande på grund av ändringar i Google Drive API)
+ - Använd Google Drive som källa i Kodis filhanterare.
  - Detta program är inte anslutet till eller sponsrat av Google.
 		</description>
 		<license>GPL-3.0-or-later</license>

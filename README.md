@@ -8,6 +8,7 @@ Play the videos, music and pictures in your Google Drive on Kodi.
 * Subtitles stored next to a video, with the same name (for example `movie.mkv` and `movie.srt`), are loaded automatically
 * Pictures full screen, as a slideshow, or as an auto-refreshed slideshow that picks up new pictures
 * Export videos and music to the Kodi library (.strm files)
+* Use Google Drive as a source in Kodi's file manager (add `http://localhost:8587/source/` as a source)
 * Read-only: the add-on never changes or deletes your files
 * Sign in from your phone or computer with a short code shown in Kodi: your password is only entered on Google's pages
 
