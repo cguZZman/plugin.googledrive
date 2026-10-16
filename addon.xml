@@ -30,6 +30,17 @@ Play all your media from Google Drive including Videos, Music and Pictures.
   - ייצוא קטעי הווידאו לספרייה שלך (קבצי .strm)
   - תוכנית זו אינה קשורה או ממומנת על ידי Google.
 		</description>
+		<summary lang="sv_SE">Google Drive för KODI</summary>
+		<description lang="sv_SE">
+Spela upp alla dina medier från Google Drive, inklusive videor, musik och bilder.
+ - Obegränsat antal konton.
+ - Stöd för Team Drives
+ - Sök i din Drive.
+ - Automatiskt uppdaterat bildspel.
+ - Exportera dina videor till biblioteket (.strm-filer)
+ - Använd Google Drive som källa. **(Fungerar inte för närvarande på grund av ändringar i Google Drive API)
+ - Detta program är inte anslutet till eller sponsrat av Google.
+		</description>
 		<license>GPL-3.0-or-later</license>
 		<source>https://github.com/cguZZman/plugin.googledrive</source>
 		<forum>https://github.com/cguZZman/plugin.googledrive/issues</forum>
