@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="plugin.googledrive" name="Google Drive" version="1.6.6" provider-name="Carlos Guzman (cguZZman)">
+<addon id="plugin.googledrive" name="Google Drive" version="1.6.7" provider-name="Carlos Guzman (cguZZman)">
 	<requires>
 		<import addon="xbmc.python" version="3.0.0" />
-		<import addon="script.module.clouddrive.common" version="1.5.6"/>
+		<import addon="script.module.clouddrive.common" version="1.5.7"/>
 	</requires>
 	<extension point="xbmc.python.pluginsource" library="entrypoint.py">
 		<provides>image audio video</provides>
@@ -48,7 +48,11 @@ Spela upp alla dina medier från Google Drive, inklusive videor, musik och bilde
 			<icon>icon.png</icon>
 			<fanart>fanart.jpg</fanart>
 		</assets>
-		<news>v1.6.6 released Oct 16, 2026:
+		<news>v1.6.7 released Oct 16, 2026:
+- Use Google Drive as a source in Kodi's file manager works again
+- Requires clouddrive.common 1.5.7
+
+v1.6.6 released Oct 16, 2026:
 - Faster exports now come from clouddrive.common 1.5.6 (required)
 
 v1.6.5 released Oct 15, 2026:
