@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="plugin.googledrive" name="Google Drive" version="1.6.3" provider-name="Carlos Guzman (cguZZman)">
+<addon id="plugin.googledrive" name="Google Drive" version="1.6.4" provider-name="Carlos Guzman (cguZZman)">
 	<requires>
 		<import addon="xbmc.python" version="3.0.0" />
 		<import addon="script.module.clouddrive.common" version="1.5.4"/>
@@ -37,7 +37,10 @@ Play all your media from Google Drive including Videos, Music and Pictures.
 			<icon>icon.png</icon>
 			<fanart>fanart.jpg</fanart>
 		</assets>
-		<news>v1.6.3 released Oct 12, 2026:
+		<news>v1.6.4 released Oct 15, 2026:
+- New icon and fanart
+
+v1.6.3 released Oct 12, 2026:
 - Stream format selection removed: it relied on an undocumented Google service that no longer works
 - "Check for Google ban" is now "Check download quota"
 - Search works with quotes in the text, and subtitles are taken only from the video's folder
