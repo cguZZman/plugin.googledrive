@@ -21,7 +21,6 @@ class FakeGoogleDrive(GoogleDrive):
         self.calls = []
         self._driveid = 'me'
         self._is_shared_drive = False
-        self._subtree_cache = {}
 
     def configure(self, account_manager, driveid):
         pass
@@ -112,46 +111,33 @@ class SubtreeListingTest(unittest.TestCase):
 
     def test_lists_the_whole_tree_in_one_request_per_level(self):
         d = TreeDrive(self.TREE)
-        self.assertEqual(sorted(i['id'] for i in d.get_folder_items(item_id='root', include_download_info=True)), ['A', 'B', 'r'])
+        tree = d.list_subtree('me', 'root')
+        self.assertEqual({k: sorted(i['id'] for i in v) for k, v in tree.items()}, {'root': ['A', 'B', 'r'], 'A': ['C', 'a'], 'B': ['b'], 'C': ['c']})
         self.assertEqual([c[1]['q'] for c in d.calls], [
             "('root' in parents) and not trashed",
             "('A' in parents or 'B' in parents) and not trashed",
             "('C' in parents) and not trashed"])
-        origins = []
-        a = d.get_folder_items(item_id='A', include_download_info=True, on_before_add_item=lambda item: origins.append(item['id']))
-        self.assertEqual(sorted(i['id'] for i in a), ['C', 'a'])
-        self.assertEqual(sorted(origins), ['C', 'a'], 'the export hook runs on cached items too')
-        self.assertTrue(all('download_info' in i for i in a if 'folder' not in i))
-        self.assertEqual([i['id'] for i in d.get_folder_items(item_id='C', include_download_info=True)], ['c'])
-        self.assertEqual(len(d.calls), 3, 'subfolders come from the cache')
+        self.assertTrue(all('download_info' in i for i in tree['A'] if 'folder' not in i))
 
-    def test_cached_items_are_handed_out_once_and_expire(self):
+    def test_exports_get_every_folder_from_one_listing(self):
         d = TreeDrive(self.TREE)
-        d.get_folder_items(item_id='root', include_download_info=True)
-        d.get_folder_items(item_id='A', include_download_info=True)
-        d.get_folder_items(item_id='A', include_download_info=True)
-        self.assertEqual(d.calls[-2][1]['q'], "('A' in parents) and not trashed", 'listed again after its items were used')
-        started, items = d._subtree_cache['B']
-        d._subtree_cache['B'] = (started - GoogleDrive._SUBTREE_TTL - 1, items)
-        calls = len(d.calls)
-        d.get_folder_items(item_id='B', include_download_info=True)
-        self.assertEqual(d.calls[calls][1]['q'], "('B' in parents) and not trashed", 'expired entries are not used')
+        for folder in ('root', 'A', 'B', 'C'):
+            d.get_export_folder_items('me', folder)
+        self.assertEqual(len(d.calls), 3)
 
     def test_many_folders_are_split_into_batches(self):
-        folders = {'root': [('f%d' % n, 'f%d/' % n) for n in range(250)]}
-        d = TreeDrive(tree_of(folders))
-        d.get_folder_items(item_id='root', include_download_info=True)
+        d = TreeDrive(tree_of({'root': [('f%d' % n, 'f%d/' % n) for n in range(250)]}))
+        d.list_subtree('me', 'root')
         self.assertEqual([c[1]['q'].count(' in parents') for c in d.calls], [1, 100, 100, 50])
 
     def test_a_shortcut_to_an_ancestor_does_not_loop(self):
         tree = tree_of({'root': [('A', 'A/')], 'A': [('a', 'a.mp4')]})
         tree['A'].append(drive_file('s', 'back', 'application/vnd.google-apps.shortcut', shortcutDetails={'targetId': 'root', 'targetMimeType': FOLDER}))
         d = TreeDrive(tree)
-        d.get_folder_items(item_id='root', include_download_info=True)
+        d.list_subtree('me', 'root')
         self.assertEqual(len(d.calls), 2)
 
     def test_browsing_still_lists_one_folder(self):
         d = TreeDrive(self.TREE)
-        self.assertEqual(sorted(i['id'] for i in d.get_folder_items(item_id='root')), ['A', 'B', 'r'])
+        self.assertEqual(sorted(i['id'] for i in d.get_folder_items(item_id='root', include_download_info=True)), ['A', 'B', 'r'])
         self.assertEqual([c[1]['q'] for c in d.calls], ["'root' in parents and not trashed"])
-        self.assertEqual(d._subtree_cache, {})

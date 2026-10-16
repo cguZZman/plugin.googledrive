@@ -20,7 +20,6 @@
 import urllib
 import datetime
 import copy
-import time
 
 from clouddrive.common.remote.provider import Provider
 from clouddrive.common.utils import Utils
@@ -43,7 +42,6 @@ class GoogleDrive(Provider):
         super(GoogleDrive, self).__init__('googledrive', source_mode)
         self.download_requires_auth = True
         self._items_cache = Cache(KodiUtils.get_addon_info('id'), 'items', datetime.timedelta(minutes=KodiUtils.get_cache_expiration_time()))
-        self._subtree_cache = {}
             
     def configure(self, account_manager, driveid):
         super(GoogleDrive, self).configure(account_manager, driveid)
@@ -119,24 +117,12 @@ class GoogleDrive(Provider):
             file_fileds = file_fileds + ',description,hasThumbnail,thumbnailLink,owners(permissionId),parents,trashed,imageMediaMetadata(width),videoMediaMetadata,shortcutDetails'
         return file_fileds
         
-    # Library exports list every folder of a tree, one request per folder. Instead, the first listing of a folder with
-    # download info lists its whole subtree, many folders per request, and keeps each subfolder's items for the export's
-    # next calls. Each folder's items are handed out once and only for a few minutes, so a later export lists everything
-    # again. Based on plugin.googledrive#320 by 0o120 (28 requests instead of 2,317 for 2,292 movies).
+    # Parent folders per query when listing a tree for library exports (list_subtree).
     _SUBTREE_BATCH = 100
-    _SUBTREE_TTL = 600
 
     def get_folder_items(self, item_driveid=None, item_id=None, path=None, on_items_page_completed=None, include_download_info=False, on_before_add_item=None):
         item_driveid = Utils.default(item_driveid, self._driveid)
         parameters = self.prepare_parameters()
-        if item_id and include_download_info:
-            cached = self._subtree_cache.pop(item_id, None)
-            if cached and time.time() - cached[0] < self._SUBTREE_TTL:
-                return self._hand_out(cached[1], on_items_page_completed, on_before_add_item)
-            parameters['fields'] = 'files(%s),kind,nextPageToken' % self._get_field_parameters()
-            parameters['pageSize'] = 1000
-            self.configure(self._account_manager, self._driveid)
-            return self._list_subtree(item_id, parameters, on_items_page_completed, on_before_add_item)
         if item_id:
             parameters['q'] = '\'%s\' in parents' % item_id
         elif path == 'sharedWithMe' or path == 'starred':
@@ -161,39 +147,33 @@ class GoogleDrive(Provider):
         items.extend(self.process_files(files, parameters, on_items_page_completed, include_download_info, on_before_add_item=on_before_add_item))
         return items
     
-    def _list_subtree(self, root_id, base_parameters, on_items_page_completed=None, on_before_add_item=None):
-        children = {root_id: []}
-        pending = [root_id]
-        started = time.time()
+    def list_subtree(self, item_driveid, item_id):
+        # The tree breadth-first, with many parent folders per query: about one request per level instead of one per
+        # folder. Based on plugin.googledrive#320 by 0o120 (28 requests instead of 2,317 for 2,292 movies).
+        base_parameters = self.prepare_parameters()
+        base_parameters['fields'] = 'files(%s),kind,nextPageToken' % self._get_field_parameters()
+        base_parameters['pageSize'] = 1000
+        self.configure(self._account_manager, self._driveid)
+        tree = {item_id: []}
+        pending = [item_id]
         while pending:
             batch, pending = pending[:self._SUBTREE_BATCH], pending[self._SUBTREE_BATCH:]
             parameters = copy.deepcopy(base_parameters)
             parameters['q'] = '(%s) and not trashed' % ' or '.join('\'%s\' in parents' % self._quote(folder_id) for folder_id in batch)
             files = self.get('/files', parameters = parameters)
             if self.cancel_operation():
-                return
+                return None
             items = self.process_files(files, parameters, include_download_info=True)
             if items is None:
-                return
+                return None
             for item in items:
-                if item['parent'] in children:
-                    children[item['parent']].append(item)
+                if item['parent'] in tree:
+                    tree[item['parent']].append(item)
                 # A folder seen before (a shortcut back to an ancestor) is not listed again.
-                if 'folder' in item and item['id'] not in children:
-                    children[item['id']] = []
+                if 'folder' in item and item['id'] not in tree:
+                    tree[item['id']] = []
                     pending.append(item['id'])
-        root_items = children.pop(root_id)
-        for folder_id, items in children.items():
-            self._subtree_cache[folder_id] = (started, items)
-        return self._hand_out(root_items, on_items_page_completed, on_before_add_item)
-
-    def _hand_out(self, items, on_items_page_completed=None, on_before_add_item=None):
-        if on_before_add_item:
-            for item in items:
-                on_before_add_item(item)
-        if on_items_page_completed:
-            on_items_page_completed(items)
-        return items
+        return tree
 
     def search(self, query, item_driveid=None, item_id=None, on_items_page_completed=None):
         item_driveid = Utils.default(item_driveid, self._driveid)
