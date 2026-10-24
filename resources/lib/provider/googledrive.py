@@ -22,6 +22,7 @@ import datetime
 import copy
 
 from clouddrive.common.remote.provider import Provider
+from clouddrive.common.remote.request import Request
 from clouddrive.common.utils import Utils
 from clouddrive.common.ui.logger import Logger
 from clouddrive.common.ui.utils import KodiUtils
@@ -33,6 +34,9 @@ except ImportError:
     from urllib2 import HTTPError
 
 class GoogleDrive(Provider):
+    revoke_supported = True
+    signin_company = 'Google'
+    _REVOKE_URL = 'https://oauth2.googleapis.com/revoke'
     _default_parameters = {'spaces': 'drive', 'supportsAllDrives': 'true', 'prettyPrint': 'false'}
     _is_shared_drive = False
     _shared_drive_parameters = {'includeItemsFromAllDrives': 'true', 'corpora': 'drive', 'driveId': ''}
@@ -43,6 +47,17 @@ class GoogleDrive(Provider):
         self.download_requires_auth = True
         self._items_cache = Cache(KodiUtils.get_addon_info('id'), 'items', datetime.timedelta(minutes=KodiUtils.get_cache_expiration_time()))
             
+
+    def revoke_access(self):
+        # Revoking the refresh token ends the app's access to the Google account, on every device signed in with it.
+        # Google answers 400 when the token is already invalid (revoked or expired): nothing left to revoke.
+        tokens = self.get_access_tokens()
+        try:
+            Request(self._REVOKE_URL, urllib.parse.urlencode({'token': tokens['refresh_token']}), {'content-type': 'application/x-www-form-urlencoded'}, tries=2).request()
+        except Exception as e:
+            httpex = ExceptionUtils.extract_exception(e, HTTPError)
+            if not httpex or httpex.code != 400:
+                raise
     def configure(self, account_manager, driveid):
         super(GoogleDrive, self).configure(account_manager, driveid)
         drive = account_manager.get_by_driveid('drive', driveid)
