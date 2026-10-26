@@ -1,5 +1,9 @@
 # Google Drive for Kodi
 
+> **The old sign-in server closes on October 30, 2026.** `drive-login.herokuapp.com` stops working that day; the add-ons now sign in at **https://drive.signinserver.com**.
+> * **Kodi 19 or later:** if the add-on stops working, update it (Add-ons > My add-ons > Video add-ons > Google Drive > Update). Your accounts keep working; you won't need to sign in again.
+> * **Kodi 17 or 18:** no longer supported. Please update Kodi to version 19 or later.
+
 Play the videos, music and pictures in your Google Drive on Kodi.
 * Any number of accounts
 * My Drive, shared drives, Shared with me and Starred
