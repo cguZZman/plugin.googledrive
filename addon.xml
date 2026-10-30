@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="plugin.googledrive" name="Google Drive" version="1.6.8" provider-name="Carlos Guzman (cguZZman)">
+<addon id="plugin.googledrive" name="Google Drive" version="1.6.9" provider-name="Carlos Guzman (cguZZman)">
 	<requires>
 		<import addon="xbmc.python" version="3.0.0" />
 		<import addon="script.module.clouddrive.common" version="1.5.10"/>
@@ -48,7 +48,10 @@ Spela upp alla dina medier från Google Drive, inklusive videor, musik och bilde
 			<icon>icon.png</icon>
 			<fanart>fanart.jpg</fanart>
 		</assets>
-		<news>v1.6.8 released Oct 24, 2026:
+		<news>v1.6.9 released Oct 30, 2026:
+- Shortcuts to folders in shared drives show their files, also in Use as a source and in library exports
+
+v1.6.8 released Oct 24, 2026:
 - Removing an account can also revoke the add-on's access to your Google account
 - Requires clouddrive.common 1.5.10
 
