@@ -126,6 +126,19 @@ class GoogleDrive(Provider):
         # A value inside single quotes in a Drive query: backslashes and quotes are escaped.
         return Utils.str(value).replace('\\', '\\\\').replace("'", "\\'")
 
+    def _use_folder_drive(self, folder_id, parameters):
+        # A shared drive's folder reached from My Drive through a shortcut lists nothing with My Drive's parameters.
+        # Called when a listing came back empty: if the folder is in a shared drive, its drive's parameters are set.
+        if self._is_shared_drive or folder_id == 'root':
+            return False
+        f = self.get('/files/%s' % folder_id, parameters = {'fields': 'driveId', 'supportsAllDrives': 'true'})
+        drive_id = Utils.get_safe_value(f, 'driveId')
+        if not drive_id:
+            return False
+        parameters.update(self._shared_drive_parameters)
+        parameters['driveId'] = drive_id
+        return True
+
     def _get_field_parameters(self):
         file_fileds = 'id,name,modifiedTime,size,mimeType'
         if not self.source_mode:
@@ -138,16 +151,18 @@ class GoogleDrive(Provider):
     def get_folder_items(self, item_driveid=None, item_id=None, path=None, on_items_page_completed=None, include_download_info=False, on_before_add_item=None):
         item_driveid = Utils.default(item_driveid, self._driveid)
         parameters = self.prepare_parameters()
+        folder_id = None
         if item_id:
-            parameters['q'] = '\'%s\' in parents' % item_id
+            folder_id = item_id
         elif path == 'sharedWithMe' or path == 'starred':
             parameters['q'] = path
         elif path == '/':
             parent = self._driveid if self._is_shared_drive else 'root'
             parameters['q'] = '\'%s\' in parents' % parent
         else:
-            item = self.get_item_by_path(path, include_download_info)
-            parameters['q'] = '\'%s\' in parents' % item['id']
+            folder_id = self.get_item_by_path(path, include_download_info)['id']
+        if folder_id:
+            parameters['q'] = '\'%s\' in parents' % folder_id
                 
         parameters['fields'] = 'files(%s),kind,nextPageToken' % self._get_field_parameters()
         if 'q' in parameters:
@@ -156,6 +171,8 @@ class GoogleDrive(Provider):
         self.configure(self._account_manager, self._driveid)
         parameters['pageSize'] = 1000
         files = self.get('/files', parameters = parameters)
+        if folder_id and not Utils.get_safe_value(files, 'files') and self._use_folder_drive(folder_id, parameters):
+            files = self.get('/files', parameters = parameters)
         if self.cancel_operation():
             return
         items = []
@@ -171,6 +188,7 @@ class GoogleDrive(Provider):
         self.configure(self._account_manager, self._driveid)
         tree = {item_id: []}
         pending = [item_id]
+        checked_drive = False
         while pending:
             batch, pending = pending[:self._SUBTREE_BATCH], pending[self._SUBTREE_BATCH:]
             parameters = copy.deepcopy(base_parameters)
@@ -181,6 +199,12 @@ class GoogleDrive(Provider):
             items = self.process_files(files, parameters, include_download_info=True)
             if items is None:
                 return None
+            if not items and batch == [item_id] and not checked_drive:
+                # The tree may be in a shared drive (exported through a shortcut): listed again with its drive's parameters.
+                checked_drive = True
+                if self._use_folder_drive(item_id, base_parameters):
+                    pending = [item_id]
+                    continue
             for item in items:
                 if item['parent'] in tree:
                     tree[item['parent']].append(item)
@@ -323,6 +347,8 @@ class GoogleDrive(Provider):
             parameters['q'] = '\'%s\' in parents and name = \'%s\' and not trashed' % (self._quote(parent), self._quote(filename))
             parameters['pageSize'] = 1000
             files = self.get('/files', parameters = parameters)
+            if not files['files'] and self._use_folder_drive(parent, parameters):
+                files = self.get('/files', parameters = parameters)
             if (len(files['files']) > 0):
                 for f in files['files']:
                     item = self._extract_item(f, include_download_info)

@@ -144,6 +144,48 @@ class SubtreeListingTest(unittest.TestCase):
         self.assertEqual([c[1]['q'] for c in d.calls], ["'root' in parents and not trashed"])
 
 
+class SharedDriveThroughShortcutTest(unittest.TestCase):
+    """A My Drive shortcut to a folder in a shared drive: its files are listed only with that drive's parameters."""
+
+    class Drive(FakeGoogleDrive):
+        def __init__(self):
+            super(SharedDriveThroughShortcutTest.Drive, self).__init__([])
+            self.files = {'team': [drive_file('t', 'team.mp4', parents=['team'])], 'empty': []}
+
+        def get(self, url, parameters=None, **kwargs):
+            import re
+            self.calls.append((url, dict(parameters or {})))
+            if url != '/files':
+                return {'driveId': 'shared'} if url == '/files/team' else {}
+            parent = re.findall(r"'([^']+)' in parents", parameters['q'])[0]
+            in_drive = parameters.get('driveId') == 'shared' and parameters.get('includeItemsFromAllDrives') == 'true'
+            name = re.findall(r"name = '([^']+)'", parameters['q'])
+            files = self.files.get(parent, []) if in_drive or parent != 'team' else []
+            if name:
+                files = [f for f in files if f['name'] == name[0]]
+            return {'kind': 'drive#fileList', 'files': files}
+
+    def test_browsing_the_shortcut_lists_the_shared_folder(self):
+        d = self.Drive()
+        self.assertEqual([i['id'] for i in d.get_folder_items(item_id='team')], ['t'])
+        self.assertEqual([c[0] for c in d.calls], ['/files', '/files/team', '/files'])
+
+    def test_empty_my_drive_folders_cost_one_more_request(self):
+        d = self.Drive()
+        self.assertEqual(d.get_folder_items(item_id='empty'), [])
+        self.assertEqual([c[0] for c in d.calls], ['/files', '/files/empty'])
+
+    def test_exports_and_paths_through_the_shortcut(self):
+        d = self.Drive()
+        self.assertEqual([i['id'] for i in d.list_subtree('me', 'team')['team']], ['t'])
+        self.assertEqual(d.list_subtree('me', 'empty'), {'empty': []})
+        d = self.Drive()
+        d._items_cache = unittest.mock.MagicMock(get=lambda key: None)
+        d.files['root'] = [drive_file('team', 'Team', 'application/vnd.google-apps.shortcut', parents=['root'],
+                                      shortcutDetails={'targetId': 'team', 'targetMimeType': FOLDER})]
+        self.assertEqual(d.get_item_by_path('/Team/team.mp4')['id'], 't')
+
+
 class PathLookupTest(unittest.TestCase):
     def test_paths_are_resolved_name_by_name_without_trashed_files(self):
         d = FakeGoogleDrive([
