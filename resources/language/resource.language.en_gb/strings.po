@@ -123,3 +123,7 @@ msgstr ""
 msgctxt "#32075"
 msgid "Skip unmodified files"
 msgstr ""
+
+msgctxt "#32076"
+msgid "Items per page (0 = the whole folder)"
+msgstr ""

@@ -17,6 +17,7 @@
     </category>
     <category label="32032">
         <setting label="32033" type="text" id="sign-in-server" default="https://drive.signinserver.com"/>
+        <setting label="32076" type="number" id="page_size" default="500"/>
         <setting label="32034" type="number" id="cache-expiration-time" default="5"/>
         <setting label="32035" type="action" option="close" action="RunPlugin(plugin://plugin.googledrive/?action=_clear_cache)"/>
         <setting label="32012" type="action" option="close" action="RunPlugin(plugin://plugin.googledrive/?action=_open_common_settings)"/>

@@ -34,6 +34,7 @@ except ImportError:
     from urllib2 import HTTPError
 
 class GoogleDrive(Provider):
+    folder_paging_supported = True
     revoke_supported = True
     signin_company = 'Google'
     _REVOKE_URL = 'https://oauth2.googleapis.com/revoke'
@@ -148,8 +149,8 @@ class GoogleDrive(Provider):
     # Parent folders per query when listing a tree for library exports (list_subtree).
     _SUBTREE_BATCH = 100
 
-    def get_folder_items(self, item_driveid=None, item_id=None, path=None, on_items_page_completed=None, include_download_info=False, on_before_add_item=None):
-        item_driveid = Utils.default(item_driveid, self._driveid)
+    def _folder_query(self, item_id, path, include_download_info=False):
+        # The parameters that list a folder, and the folder's id (None for the root and the special views).
         parameters = self.prepare_parameters()
         folder_id = None
         if item_id:
@@ -169,6 +170,10 @@ class GoogleDrive(Provider):
             parameters['q'] += ' and not trashed'
         
         self.configure(self._account_manager, self._driveid)
+        return parameters, folder_id
+
+    def get_folder_items(self, item_driveid=None, item_id=None, path=None, on_items_page_completed=None, include_download_info=False, on_before_add_item=None):
+        parameters, folder_id = self._folder_query(item_id, path, include_download_info)
         parameters['pageSize'] = 1000
         files = self.get('/files', parameters = parameters)
         if folder_id and not Utils.get_safe_value(files, 'files') and self._use_folder_drive(folder_id, parameters):
@@ -179,6 +184,36 @@ class GoogleDrive(Provider):
         items.extend(self.process_files(files, parameters, on_items_page_completed, include_download_info, on_before_add_item=on_before_add_item))
         return items
     
+    # Next page tokens of a shared drive's folder reached through a shortcut carry the drive: "drive:<id>:<token>".
+    _DRIVE_PAGE_TOKEN = 'drive:'
+
+    def get_folder_page(self, item_driveid=None, item_id=None, path=None, page_size=500, page_token=None, on_items_page_completed=None):
+        if path == 'sharedWithMe' or path == 'starred':
+            # Not paged: listed whole, as before.
+            items = self.get_folder_items(item_driveid, item_id, path, on_items_page_completed)
+            return None if items is None else (items, None)
+        parameters, folder_id = self._folder_query(item_id, path)
+        parameters['pageSize'] = page_size
+        # Folders first, then by name: each page follows the one before.
+        parameters['orderBy'] = 'folder,name'
+        folder_drive = None
+        if page_token and page_token.startswith(self._DRIVE_PAGE_TOKEN):
+            folder_drive, page_token = page_token[len(self._DRIVE_PAGE_TOKEN):].split(':', 1)
+            parameters.update(self._shared_drive_parameters)
+            parameters['driveId'] = folder_drive
+        if page_token:
+            parameters['pageToken'] = page_token
+        files = self.get('/files', parameters = parameters)
+        if not page_token and folder_id and not Utils.get_safe_value(files, 'files') and self._use_folder_drive(folder_id, parameters):
+            folder_drive = parameters['driveId']
+            files = self.get('/files', parameters = parameters)
+        if self.cancel_operation():
+            return
+        next_page_token = files.pop('nextPageToken', None)
+        if next_page_token and folder_drive:
+            next_page_token = '%s%s:%s' % (self._DRIVE_PAGE_TOKEN, folder_drive, next_page_token)
+        return self.process_files(files, parameters, on_items_page_completed), next_page_token
+
     def list_subtree(self, item_driveid, item_id):
         # The tree breadth-first, with many parent folders per query: about one request per level instead of one per
         # folder. Based on plugin.googledrive#320 by 0o120 (28 requests instead of 2,317 for 2,292 movies).
@@ -367,15 +402,16 @@ class GoogleDrive(Provider):
         item_driveid = Utils.default(item_driveid, self._driveid)
         subtitles = []
         parameters['fields'] = 'files(' + self._get_field_parameters() + ')'
-        # Subtitles stored next to the video, named after it.
-        parameters['q'] = 'name contains \'%s\'' % self._quote(Utils.remove_extension(name))
+        # Subtitles stored next to the video, named after it: Movie.srt, Movie.en.srt (not Movie 2.srt).
+        stem = Utils.str(Utils.remove_extension(name))
+        parameters['q'] = 'name contains \'%s\' and not trashed' % self._quote(stem)
         if parent:
             parameters['q'] += ' and \'%s\' in parents' % self._quote(parent)
         parameters['pageSize'] = 1000
         files = self.get('/files', parameters = parameters)
         for f in files['files']:
             subtitle = self._extract_item(f, include_download_info)
-            if subtitle['name_extension'].lower() in ('srt','idx','sub','sbv','ass','ssa','smi'):
+            if subtitle['name_extension'].lower() in ('srt','idx','sub','sbv','ass','ssa','smi','vtt') and Utils.str(subtitle['name']).lower().startswith(stem.lower() + '.'):
                 subtitles.append(subtitle)
         return subtitles
     

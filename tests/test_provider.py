@@ -57,10 +57,31 @@ class GoogleDriveProviderTest(unittest.TestCase):
         self.assertEqual(d.calls[0][1]['q'], "fullText contains 'it\\'s a \\\\ test' and not trashed")
 
     def test_subtitles_come_from_the_video_folder(self):
-        d = FakeGoogleDrive([{'files': [drive_file('s1', 'Movie.srt', 'text/plain'), drive_file('x', 'Movie.nfo', 'text/plain')]}])
+        # "name contains" also finds other videos' subtitles: only the video's name and a dot are kept.
+        d = FakeGoogleDrive([{'files': [drive_file('s1', "Movie's.srt", 'text/plain'), drive_file('x', "Movie's.nfo", 'text/plain'),
+                                        drive_file('s2', "movie's.EN.vtt", 'text/vtt'), drive_file('y', "Movie's 2.srt", 'text/plain')]}])
         subtitles = d.get_subtitles('folder', "Movie's.mkv")
-        self.assertEqual([s['name'] for s in subtitles], ['Movie.srt'])
-        self.assertEqual(d.calls[0][1]['q'], "name contains 'Movie\\'s' and 'folder' in parents")
+        self.assertEqual([s['id'] for s in subtitles], ['s1', 's2'])
+        self.assertEqual(d.calls[0][1]['q'], "name contains 'Movie\\'s' and not trashed and 'folder' in parents")
+
+    def test_folders_are_listed_a_page_at_a_time(self):
+        d = FakeGoogleDrive([
+            {'kind': 'drive#fileList', 'files': [drive_file('a', 'a.mp4')], 'nextPageToken': 'p2'},
+            {'kind': 'drive#fileList', 'files': [drive_file('b', 'b.mp4')]}])
+        items, next_page_token = d.get_folder_page(item_id='folder', page_size=500)
+        self.assertEqual(([i['id'] for i in items], next_page_token), (['a'], 'p2'))
+        self.assertEqual((d.calls[0][1]['pageSize'], d.calls[0][1]['orderBy']), (500, 'folder,name'))
+        self.assertNotIn('pageToken', d.calls[0][1])
+        items, next_page_token = d.get_folder_page(item_id='folder', page_size=500, page_token='p2')
+        self.assertEqual(([i['id'] for i in items], next_page_token), (['b'], None))
+        self.assertEqual((len(d.calls), d.calls[1][1]['pageToken']), (2, 'p2'))
+
+    def test_shared_with_me_and_starred_are_not_paged(self):
+        d = FakeGoogleDrive([
+            {'kind': 'drive#fileList', 'files': [drive_file('a', 'a.mp4')], 'nextPageToken': 'p2'},
+            {'kind': 'drive#fileList', 'files': [drive_file('b', 'b.mp4')]}])
+        items, next_page_token = d.get_folder_page(path='starred', page_size=1)
+        self.assertEqual(([i['id'] for i in items], next_page_token), (['a', 'b'], None))
 
     def test_shared_drive_parameters(self):
         d = FakeGoogleDrive([])
@@ -174,6 +195,25 @@ class SharedDriveThroughShortcutTest(unittest.TestCase):
         d = self.Drive()
         self.assertEqual(d.get_folder_items(item_id='empty'), [])
         self.assertEqual([c[0] for c in d.calls], ['/files', '/files/empty'])
+
+    def test_pages_of_the_shared_folder_stay_in_its_drive(self):
+        class Paged(self.Drive):
+            def get(self, url, parameters=None, **kwargs):
+                files = super(Paged, self).get(url, parameters, **kwargs)
+                if url == '/files' and files['files']:
+                    first = 'pageToken' not in parameters
+                    files['files'] = files['files'][:1] if first else files['files'][1:]
+                    if first:
+                        files['nextPageToken'] = 'n'
+                return files
+        d = Paged()
+        d.files['team'].append(drive_file('u', 'zz.mp4', parents=['team']))
+        items, next_page_token = d.get_folder_page(item_id='team', page_size=1)
+        self.assertEqual(([i['id'] for i in items], next_page_token), (['t'], 'drive:shared:n'))
+        items, next_page_token = d.get_folder_page(item_id='team', page_size=1, page_token=next_page_token)
+        self.assertEqual(([i['id'] for i in items], next_page_token), (['u'], None))
+        self.assertEqual((d.calls[-1][1]['pageToken'], d.calls[-1][1]['driveId']), ('n', 'shared'))
+        self.assertEqual([c[0] for c in d.calls], ['/files', '/files/team', '/files', '/files'], 'the next page needs no lookup')
 
     def test_exports_and_paths_through_the_shortcut(self):
         d = self.Drive()
