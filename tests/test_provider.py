@@ -57,12 +57,20 @@ class GoogleDriveProviderTest(unittest.TestCase):
         self.assertEqual(d.calls[0][1]['q'], "fullText contains 'it\\'s a \\\\ test' and not trashed")
 
     def test_subtitles_come_from_the_video_folder(self):
-        # "name contains" also finds other videos' subtitles: only the video's name and a dot are kept.
-        d = FakeGoogleDrive([{'files': [drive_file('s1', "Movie's.srt", 'text/plain'), drive_file('x', "Movie's.nfo", 'text/plain'),
-                                        drive_file('s2', "movie's.EN.vtt", 'text/vtt'), drive_file('y', "Movie's 2.srt", 'text/plain')]}])
-        subtitles = d.get_subtitles('folder', "Movie's.mkv")
-        self.assertEqual([s['id'] for s in subtitles], ['s1', 's2'])
-        self.assertEqual(d.calls[0][1]['q'], "name contains 'Movie\\'s' and not trashed and 'folder' in parents")
+        # From the folder's listing: "name contains" also found other videos' subtitles, and missed some names (#251).
+        stem = 'a b c d e (1234) [h264 1080p \u2022 DD 5.1]'
+        d = FakeGoogleDrive([
+            {'kind': 'drive#fileList', 'files': [drive_file('v', stem + '.MKV'), drive_file('s1', stem + '.HU.SRT', 'text/plain'),
+                                                 drive_file('x', stem + '.nfo', 'text/plain')], 'nextPageToken': 'p2'},
+            {'kind': 'drive#fileList', 'files': [drive_file('s2', stem.upper() + '.vtt', 'text/vtt'), drive_file('y', stem + ' 2.srt', 'text/plain'),
+                                                 drive_file('f', stem + '.srt', FOLDER)]}])
+        self.assertEqual([s['id'] for s in d.get_subtitles('folder', stem + '.MKV')], ['s1', 's2'])
+        self.assertEqual(d.calls[0][1]['q'], "'folder' in parents and not trashed")
+
+    def test_subtitles_without_a_parent_are_searched_by_name(self):
+        d = FakeGoogleDrive([{'files': [drive_file('s1', "Movie's.srt", 'text/plain'), drive_file('y', "Movie's 2.srt", 'text/plain')]}])
+        self.assertEqual([s['id'] for s in d.get_subtitles(None, "Movie's.mkv")], ['s1'])
+        self.assertEqual(d.calls[0][1]['q'], "name contains 'Movie\\'s' and not trashed")
 
     def test_folders_are_listed_a_page_at_a_time(self):
         d = FakeGoogleDrive([

@@ -398,20 +398,21 @@ class GoogleDrive(Provider):
         return item
     
     def get_subtitles(self, parent, name, item_driveid=None, include_download_info=False):
-        parameters = self.prepare_parameters()
-        item_driveid = Utils.default(item_driveid, self._driveid)
-        subtitles = []
-        parameters['fields'] = 'files(' + self._get_field_parameters() + ')'
-        # Subtitles stored next to the video, named after it: Movie.srt, Movie.en.srt (not Movie 2.srt).
+        # Subtitles stored next to the video, named after it: Movie.srt, Movie.en.srt (not Movie 2.srt). From the
+        # folder's listing: Drive's "name contains" found nothing for some names, like "a (1234) [h264 • DD 5.1]" (#251).
         stem = Utils.str(Utils.remove_extension(name))
-        parameters['q'] = 'name contains \'%s\' and not trashed' % self._quote(stem)
         if parent:
-            parameters['q'] += ' and \'%s\' in parents' % self._quote(parent)
-        parameters['pageSize'] = 1000
-        files = self.get('/files', parameters = parameters)
-        for f in files['files']:
-            subtitle = self._extract_item(f, include_download_info)
-            if subtitle['name_extension'].lower() in ('srt','idx','sub','sbv','ass','ssa','smi','vtt') and Utils.str(subtitle['name']).lower().startswith(stem.lower() + '.'):
+            items = self.get_folder_items(item_driveid, parent, include_download_info=include_download_info) or []
+        else:
+            parameters = self.prepare_parameters()
+            parameters['fields'] = 'files(' + self._get_field_parameters() + ')'
+            parameters['q'] = 'name contains \'%s\' and not trashed' % self._quote(stem)
+            parameters['pageSize'] = 1000
+            files = self.get('/files', parameters = parameters)
+            items = [self._extract_item(f, include_download_info) for f in files['files']]
+        subtitles = []
+        for subtitle in items:
+            if 'folder' not in subtitle and Utils.default(subtitle['name_extension'], '').lower() in ('srt','idx','sub','sbv','ass','ssa','smi','vtt') and Utils.str(subtitle['name']).lower().startswith(stem.lower() + '.'):
                 subtitles.append(subtitle)
         return subtitles
     
