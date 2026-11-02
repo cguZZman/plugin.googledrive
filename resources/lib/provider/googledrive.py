@@ -37,6 +37,8 @@ class GoogleDrive(Provider):
     folder_paging_supported = True
     revoke_supported = True
     signin_company = 'Google'
+    # Users can sign in with their own Google Cloud OAuth client (see the README): Kodi refreshes those tokens here.
+    own_client_token_url = 'https://oauth2.googleapis.com/token'
     _REVOKE_URL = 'https://oauth2.googleapis.com/revoke'
     _default_parameters = {'spaces': 'drive', 'supportsAllDrives': 'true', 'prettyPrint': 'false'}
     _is_shared_drive = False
