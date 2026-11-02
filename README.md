@@ -2,7 +2,8 @@
 
 > **Google is blocking new sign-ins until it verifies the add-on.**
 > On October 31, 2026, accounts added before the new sign-in server (drive-login.herokuapp.com) stopped working: they were linked to the add-on's old Google app, which has been retired.
-> * Until Google finishes verifying the add-on's new app, it shows "This app is blocked" to new users, and there's no way around it. Sorry: please wait for the verification. We'll announce it in [this issue](https://github.com/cguZZman/plugin.googledrive/issues/357).
+> * Until Google verifies the add-on's new app, it shows "This app is blocked" to new users, and there's no way around it. We're working on the verification and will announce it in [this issue](https://github.com/cguZZman/plugin.googledrive/issues/357).
+> * The verification requires a security review that costs $675 every year. If you'd like to help make it happen, you can support the project on **[GitHub Sponsors](https://github.com/sponsors/cguZZman)**.
 > * Accounts already added through https://drive.signinserver.com keep working; you don't need to do anything.
 > * **Kodi 17 or 18:** no longer supported. Please update Kodi to version 19 or later.
 
