@@ -1,11 +1,9 @@
 # Google Drive for Kodi
 
-> **Signing in again: Google sign-ins are limited until Google verifies the add-on.**
+> **Google is blocking new sign-ins until it verifies the add-on.**
 > On October 31, 2026, accounts added before the new sign-in server (drive-login.herokuapp.com) stopped working: they were linked to the add-on's old Google app, which has been retired.
-> * If Kodi says your account must be signed in again, answer **Yes** and sign in at **https://drive.signinserver.com**.
-> * Google shows a warning that it hasn't verified the app yet. To continue, select **Advanced**, then **Go to Cloud Drive Sign-in for Kodi**.
-> * Until the verification is finished, Google lets only a limited number of new users sign in. If Google says the app is blocked or has reached its user limit, please try again after the verification. We'll announce it here.
-> * Accounts added through https://drive.signinserver.com keep working; you don't need to do anything.
+> * Until Google finishes verifying the add-on's new app, it shows "This app is blocked" to new users, and there's no way around it. Sorry: please wait for the verification. We'll announce it in [this issue](https://github.com/cguZZman/plugin.googledrive/issues/357).
+> * Accounts already added through https://drive.signinserver.com keep working; you don't need to do anything.
 > * **Kodi 17 or 18:** no longer supported. Please update Kodi to version 19 or later.
 
 Play the videos, music and pictures in your Google Drive on Kodi.
